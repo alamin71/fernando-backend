@@ -222,21 +222,23 @@ export const login = async (email: string, password: string) => {
   }
 
   // subscription check
-  const sub: any = (user as any).subscription || {};
-  if (!sub.isActive || sub.status !== "ACTIVE") {
-    const stage =
-      sub.status === "pending"
-        ? "Plan selected, payment required"
-        : sub.status === "pending_approval"
-        ? "Payment done, waiting for admin approval"
-        : sub.status === "rejected"
-        ? "Subscription rejected by admin"
-        : "No active subscription";
-    throw new AppError(
-      StatusCodes.FORBIDDEN,
-      `${stage}. You cannot login yet.`
-    );
-  }
+  // subscription check removed: allow users to login without active subscription
+  // If you want to enforce subscription later, re-enable the check below.
+  // const sub: any = (user as any).subscription || {};
+  // if (!sub.isActive || sub.status !== "ACTIVE") {
+  //   const stage =
+  //     sub.status === "pending"
+  //       ? "Plan selected, payment required"
+  //       : sub.status === "pending_approval"
+  //       ? "Payment done, waiting for admin approval"
+  //       : sub.status === "rejected"
+  //       ? "Subscription rejected by admin"
+  //       : "No active subscription";
+  //   throw new AppError(
+  //     StatusCodes.FORBIDDEN,
+  //     `${stage}. You cannot login yet.`
+  //   );
+  // }
 
   const payload = {
     id: user._id.toString(),
