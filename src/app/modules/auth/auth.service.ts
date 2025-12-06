@@ -7,6 +7,7 @@ import AppError from "../../../errors/AppError";
 import { jwtHelper } from "../../../helpers/jwtHelper";
 import { emailTemplate } from "../../../shared/emailTemplate";
 import { emailHelper } from "../../../helpers/emailHelper";
+import { logger, errorLogger } from "../../../shared/logger";
 import { USER_ROLES } from "../../../enums/user";
 
 // -------------------- Signup --------------------
@@ -82,17 +83,26 @@ export const signupInit = async (payload: SignupPayload) => {
   };
   await newUser.save();
 
-  // Send email
-  await emailHelper.sendEmail(
-    emailTemplate.createAccount({
-      name: newUser.name,
-      otp,
-      email: newUser.email,
-    })
-  );
+  // Signup token (create before sending email so token errors don't block)
+  let signupToken: string | undefined;
+  try {
+    signupToken = jwtHelper.createSignupToken({ email: newUser.email });
+  } catch (err: any) {
+    // Token creation failed - log and continue (non-fatal in development)
+    errorLogger.error("Failed to create signup token: " + String(err));
+  }
 
-  // Signup token
-  const signupToken = jwtHelper.createSignupToken({ email: newUser.email });
+  // Send email asynchronously (do not await) and log any failure to avoid hanging the request
+  emailHelper
+    .sendEmail(
+      emailTemplate.createAccount({
+        name: newUser.name,
+        otp,
+        email: newUser.email,
+      })
+    )
+    .then(() => logger.info(`Signup email queued for ${newUser.email}`))
+    .catch((err) => errorLogger.error("Signup email error: " + String(err)));
 
   return {
     message: "Signup initiated. OTP sent to email",
