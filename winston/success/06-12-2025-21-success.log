@@ -1,0 +1,10 @@
+Sat Dec 06 2025 21:17:54 [SERVER-NAME] info: [32mConfig validation successful.[39m
+Sat Dec 06 2025 21:17:55 [SERVER-NAME] info: [46m🚀 Database connected successfully[49m
+Sat Dec 06 2025 21:17:55 [SERVER-NAME] info: [33m♻️  Socket is listening on 0.0.0.0:6002[39m
+Sat Dec 06 2025 21:17:55 [SERVER-NAME] info: [33m♻️  Application listening on http://0.0.0.0:5000[39m
+Sat Dec 06 2025 21:21:31 [SERVER-NAME] info: [34mSIGINT received. Shutting down gracefully...[39m
+Sat Dec 06 2025 21:21:39 [SERVER-NAME] info: [32mConfig validation successful.[39m
+Sat Dec 06 2025 21:21:40 [SERVER-NAME] info: [46m🚀 Database connected successfully[49m
+Sat Dec 06 2025 21:21:40 [SERVER-NAME] info: [33m♻️  Socket is listening on 0.0.0.0:6002[39m
+Sat Dec 06 2025 21:21:40 [SERVER-NAME] info: [33m♻️  Application listening on http://0.0.0.0:5000[39m
+Sat Dec 06 2025 21:21:41 [SERVER-NAME] info: [34mSIGINT received. Shutting down gracefully...[39m
