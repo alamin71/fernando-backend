@@ -144,7 +144,9 @@ export type IUser = {
   name: string;
   role: USER_ROLES;
   email: string;
-  password: string;
+  password?: string;
+  username?: string;
+  channelName?: string;
   image?: string;
   isDeleted?: boolean;
   stripeCustomerId?: string;

@@ -3,12 +3,30 @@ import { z } from "zod";
 // Signup
 const createSignupZodSchema = z.object({
   email: z.string().email({ message: "Valid email is required" }),
-  password: z
-    .string()
-    .min(6, { message: "Password must be at least 6 characters" }),
   role: z.string().optional(),
   profileData: z.record(z.string(), z.any()).optional(),
 });
+
+// Complete signup after OTP verification
+const createSignupCompleteZodSchema = z
+  .object({
+    username: z
+      .string()
+      .min(3, { message: "Username must be at least 3 characters" }),
+    channelName: z
+      .string()
+      .min(3, { message: "Channel name must be at least 3 characters" }),
+    password: z
+      .string()
+      .min(6, { message: "Password must be at least 6 characters" }),
+    confirmPassword: z
+      .string()
+      .min(6, { message: "Confirm password must be at least 6 characters" }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 // Verify OTP
 const createVerifyOtpZodSchema = z.object({
@@ -73,6 +91,7 @@ const createChangePasswordZodSchema = z
 
 export const AuthValidation = {
   createSignupZodSchema,
+  createSignupCompleteZodSchema,
   createVerifyOtpZodSchema,
   createLoginZodSchema,
   createRefreshTokenZodSchema,

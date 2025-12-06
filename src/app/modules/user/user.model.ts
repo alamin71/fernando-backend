@@ -140,7 +140,9 @@ const userSchema = new Schema<IUser, UserModel>(
       default: USER_ROLES.USER,
     },
     email: { type: String, required: true, unique: true, lowercase: true },
-    password: { type: String, required: true, select: false, minlength: 8 },
+    password: { type: String, required: false, select: false, minlength: 6 },
+    username: { type: String, unique: true, sparse: true, default: "" },
+    channelName: { type: String, unique: true, sparse: true, default: "" },
     image: { type: String, default: "" },
     status: {
       type: String,
@@ -233,6 +235,14 @@ userSchema.statics.isExistUserByPhone = async (contact: string) => {
   return await User.findOne({ "profileData.phone": contact });
 };
 
+userSchema.statics.isExistUserByUsername = async (username: string) => {
+  return await User.findOne({ username });
+};
+
+userSchema.statics.isExistUserByChannelName = async (channelName: string) => {
+  return await User.findOne({ channelName });
+};
+
 userSchema.statics.isMatchPassword = async (
   password: string,
   hashPassword: string
@@ -241,22 +251,45 @@ userSchema.statics.isMatchPassword = async (
 };
 
 // ---------- Hooks ----------
-userSchema.pre("save", async function (next) {
-  if (this.isModified("email")) {
-    const isExist = await User.findOne({ email: this.get("email") });
-    if (isExist) {
-      throw new AppError(StatusCodes.BAD_REQUEST, "Email already exists!");
+userSchema.pre("save", async function (this: any, next) {
+  try {
+    if (this.isModified("email")) {
+      const isExist = await User.findOne({ email: this.get("email") });
+      if (isExist) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "Email already exists!");
+      }
     }
-  }
 
-  if (this.isModified("password")) {
-    this.password = await bcrypt.hash(
-      this.password,
-      Number(config.bcrypt_salt_rounds)
-    );
-  }
+    if (this.isModified("username") && this.get("username")) {
+      const isExist = await User.findOne({ username: this.get("username") });
+      if (isExist) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "Username already exists!");
+      }
+    }
 
-  next();
+    if (this.isModified("channelName") && this.get("channelName")) {
+      const isExist = await User.findOne({
+        channelName: this.get("channelName"),
+      });
+      if (isExist) {
+        throw new AppError(
+          StatusCodes.BAD_REQUEST,
+          "Channel name already exists!"
+        );
+      }
+    }
+
+    if (this.isModified("password")) {
+      this.password = await bcrypt.hash(
+        this.password,
+        Number(config.bcrypt_salt_rounds)
+      );
+    }
+
+    next();
+  } catch (err) {
+    next(err as import("mongoose").CallbackError);
+  }
 });
 
 userSchema.pre("find", function (next) {

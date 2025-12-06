@@ -44,6 +44,29 @@ export const signupVerifyOtpController = catchAsync(
   }
 );
 
+// -------------------- Complete Signup --------------------
+export const signupCompleteController = catchAsync(
+  async (req: Request, res: Response) => {
+    const signupToken = req.headers["x-signup-token"] as string;
+    if (!signupToken)
+      throw new AppError(StatusCodes.BAD_REQUEST, "Signup token missing");
+
+    const { username, channelName, password } = req.body;
+    const result = await AuthService.signupComplete(
+      signupToken,
+      username,
+      channelName,
+      password
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: result.message,
+    });
+  }
+);
+
 // -------------------- Resend OTP --------------------
 export const resendSignupOtp = catchAsync(
   async (req: Request, res: Response) => {

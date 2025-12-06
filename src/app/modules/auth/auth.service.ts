@@ -12,10 +12,7 @@ import { USER_ROLES } from "../../../enums/user";
 
 // -------------------- Signup --------------------
 type SignupPayload = {
-  firstName: string;
-  lastName: string;
   email: string;
-  password: string;
   role?: string;
   profileData?: any;
 };
@@ -65,10 +62,7 @@ export const signupInit = async (payload: SignupPayload) => {
   };
 
   const newUser = await User.create({
-    firstName: payload.firstName,
-    lastName: payload.lastName,
     email: payload.email,
-    password: payload.password,
     role: assignRole,
     profileData,
     verified: false,
@@ -93,10 +87,11 @@ export const signupInit = async (payload: SignupPayload) => {
   }
 
   // Send email asynchronously (do not await) and log any failure to avoid hanging the request
+  const senderName = newUser.profileData?.firstName || newUser.email;
   emailHelper
     .sendEmail(
       emailTemplate.createAccount({
-        name: newUser.name,
+        name: senderName,
         otp,
         email: newUser.email,
       })
@@ -359,4 +354,57 @@ export const changePassword = async (
 // -------------------- Helper for Controller --------------------
 export const verifySignupToken = (token: string) => {
   return jwtHelper.verifySignupToken(token) as { email: string };
+};
+
+// Complete signup: set username, channelName and password after OTP verification
+export const signupComplete = async (
+  token: string,
+  username: string,
+  channelName: string,
+  password: string
+) => {
+  if (!token)
+    throw new AppError(StatusCodes.UNAUTHORIZED, "Signup token missing");
+
+  let decoded: any;
+  try {
+    decoded = jwtHelper.verifySignupToken(token) as { email: string };
+  } catch {
+    throw new AppError(
+      StatusCodes.UNAUTHORIZED,
+      "Invalid or expired signup token"
+    );
+  }
+
+  const email = decoded.email;
+  const user = await User.findOne({ email }).select(
+    "+password +authentication"
+  );
+  if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+
+  // Prevent overwriting credentials if already set
+  if (user.password) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      "Signup already completed for this user"
+    );
+  }
+
+  // Check username / channelName uniqueness
+  const existingUsername = await User.findOne({ username });
+  if (existingUsername)
+    throw new AppError(StatusCodes.CONFLICT, "Username already exists");
+  const existingChannel = await User.findOne({ channelName });
+  if (existingChannel)
+    throw new AppError(StatusCodes.CONFLICT, "Channel name already exists");
+
+  user.username = username;
+  user.channelName = channelName;
+  user.password = password; // will be hashed by pre-save hook
+  user.verified = true;
+  user.authentication = undefined;
+
+  await user.save();
+
+  return { message: "Signup completed successfully. Please login." };
 };
