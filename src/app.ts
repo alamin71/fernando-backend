@@ -39,8 +39,9 @@ app.use("/api/v1", router);
 //   res.send(welcome());
 // });
 app.get("/", (req: Request, res: Response) => {
-  res.send("wel come to fernado your server is running");
+  res.send("Welcome to Fernando! Your server is running successfully 🚀");
 });
+
 //global error handle
 app.use(globalErrorHandler);
 
