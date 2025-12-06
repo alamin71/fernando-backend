@@ -78,11 +78,21 @@ import { StatusCodes } from "http-status-codes";
 // Secret getter
 const getSecret = (secret: string | undefined): Secret => {
   if (!secret) {
+    if (config.node_env === "development") {
+      // Use a safe fallback in development so local testing (Postman) doesn't fail
+      // Replace this with a secure secret in production via environment variables
+      console.warn(
+        "[WARN] JWT secret is not set. Using development fallback secret. Set JWT_* env vars to secure values."
+      );
+      return "dev_fallback_jwt_secret" as Secret;
+    }
+
     throw new AppError(
       StatusCodes.INTERNAL_SERVER_ERROR,
       "JWT secret is not defined. Please set the required JWT_* secrets in your environment variables"
     );
   }
+
   return secret as Secret;
 };
 
