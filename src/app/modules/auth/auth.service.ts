@@ -18,7 +18,10 @@ type SignupPayload = {
 };
 
 export const signupInit = async (payload: SignupPayload) => {
-  const existing = await User.isExistUserByEmail(payload.email);
+  const normalizedEmail = String(payload.email || "")
+    .trim()
+    .toLowerCase();
+  const existing = await User.isExistUserByEmail(normalizedEmail);
   if (existing)
     throw new AppError(StatusCodes.CONFLICT, "Email already exists");
 
@@ -62,7 +65,7 @@ export const signupInit = async (payload: SignupPayload) => {
   };
 
   const newUser = await User.create({
-    email: payload.email,
+    email: normalizedEmail,
     role: assignRole,
     profileData,
     verified: false,
@@ -113,7 +116,12 @@ export const signupInit = async (payload: SignupPayload) => {
 
 // -------------------- Verify OTP --------------------
 export const signupVerifyOtp = async (email: string, otp: string) => {
-  const user = await User.findOne({ email }).select("+authentication");
+  const normalizedEmail = String(email || "")
+    .trim()
+    .toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail }).select(
+    "+authentication"
+  );
   if (!user || !user.authentication) {
     throw new AppError(StatusCodes.NOT_FOUND, "User or OTP not found");
   }
@@ -148,8 +156,12 @@ export const resendSignupOtp = async (signupToken: string) => {
   if (!signupToken)
     throw new AppError(StatusCodes.UNAUTHORIZED, "No signup token");
 
-  const decoded = jwtHelper.verifySignupToken(signupToken) as { email: string };
-  const email = decoded.email;
+  const decoded = jwtHelper.verifySignupToken(signupToken) as {
+    email: string;
+  };
+  const email = String(decoded.email || "")
+    .trim()
+    .toLowerCase();
 
   const user = await User.findOne({ email });
   if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
@@ -178,12 +190,17 @@ export const resendSignupOtp = async (signupToken: string) => {
 
 // -------------------- Login --------------------
 export const login = async (email: string, password: string) => {
-  const user = await User.findOne({ email }).select("+password subscription");
+  const normalizedEmail = String(email || "")
+    .trim()
+    .toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail }).select(
+    "+password subscription"
+  );
   if (!user) throw new AppError(StatusCodes.BAD_REQUEST, "User not found");
 
   // Debug log: show which user document was found and its verified state
   logger.info(
-    `Login attempt for email=${email} found userId=${user._id} verified=${user.verified}`
+    `Login attempt for email=${normalizedEmail} found userId=${user._id} verified=${user.verified}`
   );
 
   if (
@@ -257,7 +274,10 @@ export const refreshAccessToken = async (refreshToken: string) => {
 
 // -------------------- Forgot Password --------------------
 export const forgotPassword = async (email: string) => {
-  const user = await User.findOne({ email });
+  const normalizedEmail = String(email || "")
+    .trim()
+    .toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail });
   if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
 
   const otp = generateOTP(4);
@@ -299,7 +319,10 @@ export const verifyForgotPasswordOtp = async (
     );
   }
 
-  const user = await User.findOne({ email: decoded.email }).select(
+  const normalizedEmail = String(decoded.email || "")
+    .trim()
+    .toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail }).select(
     "+authentication"
   );
   if (!user || !user.authentication)
@@ -344,7 +367,10 @@ export const resetPasswordWithToken = async (
     );
   }
 
-  const user = await User.findOne({ email: decoded.email }).select(
+  const normalizedEmail2 = String(decoded.email || "")
+    .trim()
+    .toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail2 }).select(
     "+password +authentication"
   );
   if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
@@ -403,7 +429,9 @@ export const signupComplete = async (
     );
   }
 
-  const email = decoded.email;
+  const email = String(decoded.email || "")
+    .trim()
+    .toLowerCase();
   const user = await User.findOne({ email }).select(
     "+password +authentication"
   );
