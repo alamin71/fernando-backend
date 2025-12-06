@@ -181,6 +181,11 @@ export const login = async (email: string, password: string) => {
   const user = await User.findOne({ email }).select("+password subscription");
   if (!user) throw new AppError(StatusCodes.BAD_REQUEST, "User not found");
 
+  // Debug log: show which user document was found and its verified state
+  logger.info(
+    `Login attempt for email=${email} found userId=${user._id} verified=${user.verified}`
+  );
+
   if (
     !user.password ||
     !(await User.isMatchPassword(password, user.password))
@@ -190,6 +195,9 @@ export const login = async (email: string, password: string) => {
 
   // OTP verified?
   if (!user.verified) {
+    errorLogger.error(
+      `Login blocked: user ${user._id} (${email}) not verified`
+    );
     throw new AppError(
       StatusCodes.FORBIDDEN,
       "Account not verified. Please verify OTP first."
