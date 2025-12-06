@@ -80,7 +80,9 @@ export const signupInit = async (payload: SignupPayload) => {
   // Signup token (create before sending email so token errors don't block)
   let signupToken: string | undefined;
   try {
-    signupToken = jwtHelper.createSignupToken({ email: newUser.email });
+    signupToken = jwtHelper.createSignupToken({
+      email: newUser.email as string,
+    });
   } catch (err: any) {
     // Token creation failed - log and continue (non-fatal in development)
     errorLogger.error("Failed to create signup token: " + String(err));
@@ -93,7 +95,7 @@ export const signupInit = async (payload: SignupPayload) => {
       emailTemplate.createAccount({
         name: senderName,
         otp,
-        email: newUser.email,
+        email: newUser.email as string,
       })
     )
     .then(() => logger.info(`Signup email queued for ${newUser.email}`))
@@ -156,7 +158,11 @@ export const resendSignupOtp = async (signupToken: string) => {
   await user.save();
 
   await emailHelper.sendEmail(
-    emailTemplate.createAccount({ name: user.name, otp, email: user.email })
+    emailTemplate.createAccount({
+      name: user.name,
+      otp,
+      email: user.email as string,
+    })
   );
 
   return {
@@ -170,7 +176,10 @@ export const login = async (email: string, password: string) => {
   const user = await User.findOne({ email }).select("+password subscription");
   if (!user) throw new AppError(StatusCodes.BAD_REQUEST, "User not found");
 
-  if (!(await User.isMatchPassword(password, user.password))) {
+  if (
+    !user.password ||
+    !(await User.isMatchPassword(password, user.password))
+  ) {
     throw new AppError(StatusCodes.BAD_REQUEST, "password is incorrect");
   }
 
@@ -248,10 +257,12 @@ export const forgotPassword = async (email: string) => {
   await user.save();
 
   // reset token generate now
-  const resetToken = jwtHelper.createResetPasswordToken({ email: user.email });
+  const resetToken = jwtHelper.createResetPasswordToken({
+    email: user.email as string,
+  });
 
   await emailHelper.sendEmail(
-    emailTemplate.resetPassword({ otp, email: user.email })
+    emailTemplate.resetPassword({ otp, email: user.email as string })
   );
 
   return { otp, resetToken };
@@ -340,6 +351,9 @@ export const changePassword = async (
 ) => {
   const user = await User.findById(userId).select("+password");
   if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+
+  if (!user.password)
+    throw new AppError(StatusCodes.BAD_REQUEST, "Old password is incorrect");
 
   const isMatch = await User.isMatchPassword(oldPassword, user.password);
   if (!isMatch)

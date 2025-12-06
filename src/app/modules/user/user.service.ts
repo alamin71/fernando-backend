@@ -16,10 +16,12 @@ const getUserProfileFromDB = async (
   user: JwtPayload
 ): Promise<Partial<IUser>> => {
   const id = user.id;
-  if (!id) throw new AppError(StatusCodes.UNAUTHORIZED, "User ID missing in token");
+  if (!id)
+    throw new AppError(StatusCodes.UNAUTHORIZED, "User ID missing in token");
 
   const isExistUser: IUser | null = await User.isExistUserById(id);
-  if (!isExistUser) throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist");
+  if (!isExistUser)
+    throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist");
 
   return isExistUser;
 };
@@ -30,31 +32,45 @@ const updateProfileToDB = async (
   payload: Partial<IUser>
 ): Promise<Partial<IUser | null>> => {
   const id = user.id;
-  if (!id) throw new AppError(StatusCodes.UNAUTHORIZED, "User ID missing in token");
+  if (!id)
+    throw new AppError(StatusCodes.UNAUTHORIZED, "User ID missing in token");
 
   const isExistUser: IUser | null = await User.isExistUserById(id);
-  if (!isExistUser) throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist");
+  if (!isExistUser)
+    throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist");
 
   // Unlink old image if new image provided
   // if (payload.image && isExistUser.image) {
   //   unlinkFile(isExistUser.image);
   // }
 
-  const updatedUser: IUser | null = await User.findOneAndUpdate({ _id: id }, payload, {
-    new: true,
-  });
+  const updatedUser: IUser | null = await User.findOneAndUpdate(
+    { _id: id },
+    payload,
+    {
+      new: true,
+    }
+  );
 
   return updatedUser;
 };
 
 // ---------------- VERIFY PASSWORD ----------------
-const verifyUserPassword = async (userId: string, password: string): Promise<boolean> => {
+const verifyUserPassword = async (
+  userId: string,
+  password: string
+): Promise<boolean> => {
   if (!userId) throw new AppError(StatusCodes.UNAUTHORIZED, "User ID required");
 
   const user: IUser | null = await User.findById(userId).select("+password");
   if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+  if (!user.password)
+    throw new AppError(StatusCodes.BAD_REQUEST, "User has no password set");
 
-  const isPasswordValid = await User.isMatchPassword(password, user.password);
+  const isPasswordValid = await User.isMatchPassword(
+    password,
+    user.password as string
+  );
   return isPasswordValid;
 };
 
@@ -63,7 +79,8 @@ const deleteUser = async (userId: string): Promise<boolean> => {
   if (!userId) throw new AppError(StatusCodes.UNAUTHORIZED, "User ID required");
 
   const isExistUser: IUser | null = await User.isExistUserById(userId);
-  if (!isExistUser) throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist");
+  if (!isExistUser)
+    throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist");
 
   await User.findByIdAndUpdate(userId, { $set: { isDeleted: true } });
   return true;
