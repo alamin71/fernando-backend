@@ -1,0 +1,4 @@
+{"level":"info","message":"🚀 Database connected successfully"}
+{"level":"info","message":"♻️  Socket.io initialized on separate port"}
+{"level":"info","message":"♻️  Socket is listening on 10.0.60.126:6002"}
+{"level":"info","message":"♻️  Application listening on http://10.0.60.126:7001"}

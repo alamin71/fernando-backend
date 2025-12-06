@@ -1,0 +1,6 @@
+Thu Jul 17 2025 4:5:44 [SERVER-NAME] info: [32mConfig validation successful.[39m
+Thu Jul 17 2025 4:5:44 [SERVER-NAME] info: [46m🚀 Database connected successfully[49m
+Thu Jul 17 2025 4:5:44 [SERVER-NAME] info: [33m♻️  Socket is listening on 0.0.0.0:6002[39m
+Thu Jul 17 2025 4:5:44 [SERVER-NAME] info: [33m♻️  Application listening on http://0.0.0.0:5000[39m
+Thu Jul 17 2025 4:35:58 [SERVER-NAME] warn: [33mMongoDB disconnected. Attempting to reconnect...[39m
+Thu Jul 17 2025 4:36:8 [SERVER-NAME] info: [32mMongoDB reconnected successfully[39m

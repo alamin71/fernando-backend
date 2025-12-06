@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 1
+    },
+    "auditLog": "C:\\Projects\\fernando-backend\\winston\\success\\.6cc6598a6a72506d25e77870e300a518638dc8db-audit.json",
+    "files": [
+        {
+            "date": 1765022935468,
+            "name": "C:\\Projects\\fernando-backend\\winston\\success\\06-12-2025-18-success.log",
+            "hash": "0b516797a1fa584dabccbc254aaf987e876d8e91354af8aefa4713490c579f9f"
+        },
+        {
+            "date": 1765027022640,
+            "name": "C:\\Projects\\fernando-backend\\winston\\success\\06-12-2025-19-success.log",
+            "hash": "c294725a934201a77383996fa3f52cd69aed05ddb7501a3f217153a982147946"
+        }
+    ],
+    "hashType": "sha256"
+}

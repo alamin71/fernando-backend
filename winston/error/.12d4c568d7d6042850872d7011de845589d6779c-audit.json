@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 1
+    },
+    "auditLog": "C:\\Projects\\dreckks-backend\\winston\\error\\.12d4c568d7d6042850872d7011de845589d6779c-audit.json",
+    "files": [
+        {
+            "date": 1755494956426,
+            "name": "C:\\Projects\\dreckks-backend\\winston\\error\\18-08-2025-11-error.log",
+            "hash": "7287a3e7f7c088f60906b93780689d94a420246ff83cec5eeb202a6b328aecaf"
+        }
+    ],
+    "hashType": "sha256"
+}
