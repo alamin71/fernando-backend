@@ -133,8 +133,13 @@ export const signupVerifyOtp = async (email: string, otp: string) => {
   user.authentication = undefined;
   await user.save();
 
+  // Log for debugging
+  logger.info(`User ${user.email} verified: ${user.verified}`);
+
   return {
     message: "Account verified successfully. Please login to continue.",
+    email: user.email as string,
+    verified: user.verified,
   };
 };
 
@@ -419,6 +424,10 @@ export const signupComplete = async (
   user.authentication = undefined;
 
   await user.save();
+
+  logger.info(
+    `Signup completed for ${user.email} — verified: ${user.verified}`
+  );
 
   return { message: "Signup completed successfully. Please login." };
 };
