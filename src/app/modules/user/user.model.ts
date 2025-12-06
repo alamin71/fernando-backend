@@ -166,8 +166,8 @@ const userSchema = new Schema<IUser, UserModel>(
       gender: {
         type: String,
         enum: Object.values(GENDER),
-        required: function () {
-          return this.role === USER_ROLES.USER;
+        required: function (this: IUser) {
+          return this.role === USER_ROLES.ADMIN;
         },
         default: null,
       },
@@ -175,7 +175,7 @@ const userSchema = new Schema<IUser, UserModel>(
       designation: {
         type: String,
         enum: Object.values(DESIGNATION),
-        required: function () {
+        required: function (): boolean {
           return this.role === USER_ROLES.SERVICE_PROVIDER;
         },
       },
