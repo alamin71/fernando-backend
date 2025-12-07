@@ -114,7 +114,7 @@ export const createUserZodSchema = z.object({
 const otpVerifyZodSchema = z.object({
   body: z.object({
     email: z.string().email(),
-    otp: z.string().length(4),
+    otp: z.string().length(6, { message: "OTP must be 6 digits" }),
   }),
 });
 
@@ -133,7 +133,7 @@ const forgotPasswordZodSchema = z.object({
 const resetPasswordZodSchema = z.object({
   body: z.object({
     email: z.string().email(),
-    otp: z.string().length(4),
+    otp: z.string().length(6, { message: "OTP must be 6 digits" }),
     newPassword: z.string().min(6),
     confirmPassword: z.string().min(6),
   }),

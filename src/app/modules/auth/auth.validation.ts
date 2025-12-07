@@ -30,7 +30,7 @@ const createSignupCompleteZodSchema = z
 
 // Verify OTP
 const createVerifyOtpZodSchema = z.object({
-  otp: z.string().length(4, { message: "OTP must be 4 digits" }),
+  otp: z.string().length(6, { message: "OTP must be 6 digits" }),
 });
 
 // Login
@@ -55,7 +55,7 @@ const createForgotPasswordZodSchema = z.object({
 });
 // Forgot password OTP verification (generates reset token)
 const verifyForgotPasswordOtpZodSchema = z.object({
-  otp: z.string().length(4, { message: "OTP must be 4 digits" }),
+  otp: z.string().length(6, { message: "OTP must be 6 digits" }),
 });
 
 // Reset password (using reset token in headers)
