@@ -54,26 +54,56 @@ import { ISendEmail } from "../types/email";
 const transporter = nodemailer.createTransport({
   host: config.email.host,
   port: Number(config.email.port),
-  secure: Number(config.email.port) === 465, // 465 হলে secure:true হবে
+  secure: Number(config.email.port) === 465,
   auth: {
     user: config.email.user,
     pass: config.email.pass,
   },
+  // Improve robustness with explicit timeouts
+  connectionTimeout: 10_000,
+  greetingTimeout: 10_000,
+  // optional: set a socket timeout as well
+  socketTimeout: 20_000,
 });
 
 const sendEmail = async (values: ISendEmail) => {
-  try {
-    const info = await transporter.sendMail({
-      from: `"${config.email.email_header}" <${config.email.user}>`, // <-- must match EMAIL_USER
-      to: values.to,
-      subject: values.subject,
-      html: values.html,
-    });
+  const maxAttempts = 3;
+  let attempt = 0;
+  let lastErr: any = null;
 
-    logger.info("Mail sent successfully", info.accepted);
-  } catch (error) {
-    errorLogger.error("Email", error);
+  while (attempt < maxAttempts) {
+    attempt += 1;
+    try {
+      const info = await transporter.sendMail({
+        from: `"${config.email.email_header}" <${config.email.user}>`, // <-- must match EMAIL_USER
+        to: values.to,
+        subject: values.subject,
+        html: values.html,
+      });
+
+      logger.info("Mail sent successfully", {
+        to: values.to,
+        accepted: info.accepted,
+      });
+      return info;
+    } catch (error: any) {
+      lastErr = error;
+      errorLogger.error(`Email send attempt ${attempt} failed`, {
+        err: String(error),
+      });
+
+      // If it's the last attempt, break and return after logging
+      if (attempt >= maxAttempts) break;
+
+      // Exponential backoff before retrying
+      const backoffMs = 500 * Math.pow(2, attempt - 1);
+      await new Promise((resolve) => setTimeout(resolve, backoffMs));
+    }
   }
+
+  // All attempts failed — log detailed error and return null
+  errorLogger.error("All email send attempts failed", { error: lastErr });
+  return null;
 };
 
 const sendEmailForAdmin = async (values: ISendEmail) => {
