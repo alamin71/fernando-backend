@@ -71,8 +71,8 @@ export const signupInit = async (payload: SignupPayload) => {
     verified: false,
   });
 
-  // OTP generate
-  const otp = generateOTP(4);
+  // OTP generate (6 digits)
+  const otp = generateOTP(6);
   newUser.authentication = {
     oneTimeCode: otp,
     expireAt: new Date(Date.now() + 10 * 60 * 1000),
@@ -166,7 +166,7 @@ export const resendSignupOtp = async (signupToken: string) => {
   const user = await User.findOne({ email });
   if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
 
-  const otp = generateOTP(4);
+  const otp = generateOTP(6);
   user.authentication = {
     oneTimeCode: otp,
     expireAt: new Date(Date.now() + 10 * 60 * 1000),
@@ -176,7 +176,7 @@ export const resendSignupOtp = async (signupToken: string) => {
 
   await emailHelper.sendEmail(
     emailTemplate.createAccount({
-      name: user.name,
+      name: user.profileData?.firstName || user.email,
       otp,
       email: user.email as string,
     })
@@ -282,7 +282,7 @@ export const forgotPassword = async (email: string) => {
   const user = await User.findOne({ email: normalizedEmail });
   if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
 
-  const otp = generateOTP(4);
+  const otp = generateOTP(6);
 
   user.authentication = {
     oneTimeCode: otp,
