@@ -103,6 +103,35 @@ const sendEmail = async (values: ISendEmail) => {
 
   // All attempts failed — log detailed error and return null
   errorLogger.error("All email send attempts failed", { error: lastErr });
+  // If in development, try Ethereal test account as a fallback so devs can see the email
+  try {
+    if (process.env.NODE_ENV === "development" || !config.email.host) {
+      const testAccount = await nodemailer.createTestAccount();
+      const testTransporter = nodemailer.createTransport({
+        host: "smtp.ethereal.email",
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+
+      const testInfo = await testTransporter.sendMail({
+        from: `"${config.email.email_header || "Dev"}" <${testAccount.user}>`,
+        to: values.to,
+        subject: values.subject,
+        html: values.html,
+      });
+
+      const previewUrl = nodemailer.getTestMessageUrl(testInfo);
+      logger.info("Ethereal dev email sent", { to: values.to, previewUrl });
+      return testInfo;
+    }
+  } catch (ethErr) {
+    errorLogger.error("Ethereal fallback failed", { err: String(ethErr) });
+  }
+
   return null;
 };
 
