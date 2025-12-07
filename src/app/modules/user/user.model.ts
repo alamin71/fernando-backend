@@ -141,8 +141,8 @@ const userSchema = new Schema<IUser, UserModel>(
     },
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: false, select: false, minlength: 6 },
-    username: { type: String, unique: true, sparse: true, default: "" },
-    channelName: { type: String, unique: true, sparse: true, default: "" },
+    username: { type: String, unique: true, sparse: true, trim: true },
+    channelName: { type: String, unique: true, sparse: true, trim: true },
     image: { type: String, default: "" },
     status: {
       type: String,
@@ -236,10 +236,12 @@ userSchema.statics.isExistUserByPhone = async (contact: string) => {
 };
 
 userSchema.statics.isExistUserByUsername = async (username: string) => {
+  if (!username) return null;
   return await User.findOne({ username });
 };
 
 userSchema.statics.isExistUserByChannelName = async (channelName: string) => {
+  if (!channelName) return null;
   return await User.findOne({ channelName });
 };
 
@@ -253,6 +255,14 @@ userSchema.statics.isMatchPassword = async (
 // ---------- Hooks ----------
 userSchema.pre("save", async function (this: any, next) {
   try {
+    // Normalize empty-string values to undefined so sparse unique indexes ignore them
+    if (this.isModified("username") && this.get("username") === "") {
+      this.set("username", undefined);
+    }
+    if (this.isModified("channelName") && this.get("channelName") === "") {
+      this.set("channelName", undefined);
+    }
+
     if (this.isModified("email")) {
       const isExist = await User.findOne({ email: this.get("email") });
       if (isExist) {
