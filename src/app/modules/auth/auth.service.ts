@@ -303,9 +303,15 @@ export const forgotPassword = async (email: string) => {
     email: user.email as string,
   });
 
-  await emailHelper.sendEmail(
-    emailTemplate.resetPassword({ otp, email: user.email as string })
-  );
+  // Send email asynchronously (do not await) to avoid blocking the request
+  emailHelper
+    .sendEmail(
+      emailTemplate.resetPassword({ otp, email: user.email as string })
+    )
+    .then(() => logger.info(`Forgot password email queued for ${user.email}`))
+    .catch((err) =>
+      errorLogger.error("Forgot password email error: " + String(err))
+    );
 
   return { otp, resetToken };
 };
