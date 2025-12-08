@@ -128,7 +128,7 @@ import bcrypt from "bcrypt";
 import { StatusCodes } from "http-status-codes";
 import { model, Schema } from "mongoose";
 import config from "../../../config";
-import { USER_ROLES, GENDER, DESIGNATION } from "../../../enums/user";
+import { USER_ROLES } from "../../../enums/user";
 import AppError from "../../../errors/AppError";
 import { IUser, UserModel } from "./user.interface";
 
@@ -139,79 +139,61 @@ const userSchema = new Schema<IUser, UserModel>(
       enum: Object.values(USER_ROLES),
       default: USER_ROLES.USER,
     },
-    email: { type: String, required: true, unique: true, lowercase: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      index: true,
+    },
     password: { type: String, required: false, select: false, minlength: 6 },
-    username: { type: String, unique: true, sparse: true, trim: true },
-    channelName: { type: String, unique: true, sparse: true, trim: true },
+    username: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      index: true,
+    },
+    channelName: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      index: true,
+    },
     image: { type: String, default: "" },
     status: {
       type: String,
       enum: ["PENDING", "ACTIVE", "REJECTED"],
       default: "PENDING",
     },
-    verified: { type: Boolean, default: false },
-    isDeleted: { type: Boolean, default: false },
+    verified: { type: Boolean, default: false, index: true },
+    isDeleted: { type: Boolean, default: false, index: true },
 
-    stripeCustomerId: { type: String, default: "" },
-    defaultPaymentMethodId: { type: String, default: "" },
-
+    // Profile data - minimal for all users
     profileData: {
-      // Common
-      phone: { type: String, default: "" },
-      location: { type: String, default: "" },
-
-      // User specific
       firstName: { type: String, default: "" },
       lastName: { type: String, default: "" },
-      age: { type: Number, default: null },
-      weight: { type: Number, default: null },
-      gender: {
-        type: String,
-        enum: Object.values(GENDER),
-        required: function (this: IUser) {
-          return this.role === USER_ROLES.ADMIN;
-        },
-        default: null,
-      },
-
-      designation: {
-        type: String,
-        enum: Object.values(DESIGNATION),
-        required: function (): boolean {
-          return this.role === USER_ROLES.SERVICE_PROVIDER;
-        },
-      },
-
-      resumeUrl: { type: String, default: "" },
-
-      // Hospitality Venue specific
-      venueName: { type: String, default: "" },
-      hoursOfOperation: { type: String, default: "" },
-      capacity: { type: Number, default: null },
-      displayQrCodes: { type: Boolean, default: false },
-      inAppPromotion: { type: Boolean, default: false },
-      allowRewards: { type: Boolean, default: false },
-      allowEvents: { type: Boolean, default: false },
-      venueTypes: { type: [String], default: [] },
+      bio: { type: String, default: "" },
+      phone: { type: String, default: "" },
+      location: { type: String, default: "" },
     },
-    // Necessary Documents (for Service Providers & Hospitality Venue)
-    documents: [
-      {
-        name: { type: String, required: true }, // e.g. "Trade License", "NID"
-        url: { type: String, required: true }, // file storage url
-        uploadedAt: { type: Date, default: Date.now },
-        verified: { type: Boolean, default: false }, // admin verification
-      },
-    ],
-    subscription: {
-      planId: { type: String, default: null },
-      isActive: { type: Boolean, default: false },
-      startDate: { type: Date, default: null },
-      endDate: { type: Date, default: null },
-      plan: { type: String },
-      status: { type: String },
-      expiresAt: { type: Date },
+
+    // Creator specific stats (cached for performance)
+    creatorStats: {
+      totalFollowers: { type: Number, default: 0 },
+      totalStreams: { type: Number, default: 0 },
+      totalStreamViews: { type: Number, default: 0 },
+      totalLikes: { type: Number, default: 0 },
     },
+
+    // Stream key for WebRTC broadcasting
+    streamKey: { type: String, sparse: true, select: false },
+    streamKeyUpdatedAt: { type: Date, sparse: true },
+
+    // Social connections
+    followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    following: [{ type: Schema.Types.ObjectId, ref: "User" }],
 
     authentication: {
       isResetPassword: { type: Boolean, default: false },

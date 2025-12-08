@@ -31,37 +31,13 @@ export const signupInit = async (payload: SignupPayload) => {
       ? payload.role
       : USER_ROLES.USER;
 
-  let roleProfileData: any = {};
-  if (assignRole === USER_ROLES.USER) {
-    roleProfileData = {
-      firstName: payload.profileData?.firstName || "",
-      lastName: payload.profileData?.lastName || "",
-      age: payload.profileData?.age || null,
-      weight: payload.profileData?.weight || null,
-      gender: payload.profileData?.gender || null,
-    };
-  } else if (assignRole === USER_ROLES.SERVICE_PROVIDER) {
-    roleProfileData = {
-      designation: payload.profileData?.designation || "",
-      resumeUrl: payload.profileData?.resumeUrl || "",
-    };
-  } else if (assignRole === USER_ROLES.HOSPITALITY_VENUE) {
-    roleProfileData = {
-      venueName: payload.profileData?.venueName || "",
-      hoursOfOperation: payload.profileData?.hoursOfOperation || "",
-      capacity: payload.profileData?.capacity || null,
-      displayQrCodes: payload.profileData?.displayQrCodes || false,
-      inAppPromotion: payload.profileData?.inAppPromotion || false,
-      allowRewards: payload.profileData?.allowRewards || false,
-      allowEvents: payload.profileData?.allowEvents || false,
-      venueTypes: payload.profileData?.venueTypes || [],
-    };
-  }
-
+  // Simple profile data for all users (Creator or User)
   const profileData = {
+    firstName: payload.profileData?.firstName || "",
+    lastName: payload.profileData?.lastName || "",
+    bio: payload.profileData?.bio || "",
     phone: payload.profileData?.phone || "",
     location: payload.profileData?.location || "",
-    ...roleProfileData,
   };
 
   const newUser = await User.create({
@@ -201,7 +177,7 @@ export const login = async (email: string, password: string) => {
     .trim()
     .toLowerCase();
   const user = await User.findOne({ email: normalizedEmail }).select(
-    "+password subscription verified"
+    "+password verified"
   );
   if (!user) throw new AppError(StatusCodes.BAD_REQUEST, "User not found");
 
@@ -227,25 +203,6 @@ export const login = async (email: string, password: string) => {
       "Account not verified. Please verify OTP first."
     );
   }
-
-  // subscription check
-  // subscription check removed: allow users to login without active subscription
-  // If you want to enforce subscription later, re-enable the check below.
-  // const sub: any = (user as any).subscription || {};
-  // if (!sub.isActive || sub.status !== "ACTIVE") {
-  //   const stage =
-  //     sub.status === "pending"
-  //       ? "Plan selected, payment required"
-  //       : sub.status === "pending_approval"
-  //       ? "Payment done, waiting for admin approval"
-  //       : sub.status === "rejected"
-  //       ? "Subscription rejected by admin"
-  //       : "No active subscription";
-  //   throw new AppError(
-  //     StatusCodes.FORBIDDEN,
-  //     `${stage}. You cannot login yet.`
-  //   );
-  // }
 
   const payload = {
     id: user._id.toString(),

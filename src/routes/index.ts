@@ -1,8 +1,6 @@
 import express from "express";
 import { UserRouter } from "../app/modules/user/user.route";
 import AuthRouter from "../app/modules/auth/auth.route";
-import{PaymentRoutes} from "../app/modules/payments/payment.route";
-import{SubscriptionRoutes} from "../app/modules/subscriptions/subscription.route"
 
 const router = express.Router();
 const routes = [
@@ -13,14 +11,6 @@ const routes = [
   {
     path: "/users",
     route: UserRouter,
-  },
-  {
-    path: "/payment",
-    route: PaymentRoutes,
-  },
-   {
-    path: '/subscription',
-    route: SubscriptionRoutes,
   },
 ];
 

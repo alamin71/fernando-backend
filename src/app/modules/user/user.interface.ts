@@ -86,88 +86,60 @@
 //   isMatchPassword(password: string, hashPassword: string): boolean;
 // } & Model<IUser>;
 
-import { Model, Types } from "mongoose";
+import { Model } from "mongoose";
 import { USER_ROLES } from "../../../enums/user";
 
 export type ProfileData = {
-  // Common
-  phone?: string;
-  location?: string;
-
-  // USER specific
   firstName?: string;
   lastName?: string;
-  age?: number;
-  weight?: number;
-  gender?: string;
-
-  // Service Provider specific
-  designation?: string;
-  resumeUrl?: string;
-
-  // Hospitality Venue specific
-  venueName?: string;
-  hoursOfOperation?: string;
-  capacity?: number;
-  displayQrCodes?: boolean;
-  inAppPromotion?: boolean;
-  allowRewards?: boolean;
-  allowEvents?: boolean;
-  venueTypes?: string[];
-};
-// ----------------- Document -----------------
-export interface IDocument {
-  name: string;
-  url: string;
-  uploadedAt?: Date;
-  verified?: boolean;
-}
-
-// ----------------- Enums -----------------
-export type SubscriptionStatus = "PENDING" | "ACTIVE" | "REJECTED" | "EXPIRED";
-
-export type UserStatus = "ACTIVE" | "BLOCKED";
-
-// ----------------- Subscription Data -----------------
-export type SubscriptionData = {
-  planId?: string | Types.ObjectId | null;
-  status?: SubscriptionStatus;
-  isActive?: boolean;
-  startDate?: Date;
-  endDate?: Date;
-  plan?: string;
-  expiresAt?: Date;
+  bio?: string;
+  phone?: string;
+  location?: string;
 };
 
-// ----------------- User -----------------
+export type CreatorStats = {
+  totalFollowers?: number;
+  totalStreams?: number;
+  totalStreamViews?: number;
+  totalLikes?: number;
+};
+
 export type IUser = {
-  name: string;
+  _id?: string;
   role: USER_ROLES;
   email: string;
   password?: string;
   username?: string;
   channelName?: string;
   image?: string;
-  isDeleted?: boolean;
-  stripeCustomerId?: string;
-  defaultPaymentMethodId?: string;
-  status?: UserStatus;
   verified?: boolean;
+  isDeleted?: boolean;
+  status?: "PENDING" | "ACTIVE" | "REJECTED";
 
   profileData?: ProfileData;
-  subscription?: SubscriptionData;
-  documents?: IDocument[];
+  creatorStats?: CreatorStats;
+
+  streamKey?: string;
+  streamKeyUpdatedAt?: Date;
+
+  followers?: string[];
+  following?: string[];
 
   authentication?: {
     isResetPassword?: boolean;
     oneTimeCode?: number;
     expireAt?: Date;
   };
+
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export type UserModel = Model<IUser> & {
   isExistUserById(id: string): Promise<IUser | null>;
   isExistUserByEmail(email: string): Promise<IUser | null>;
   isExistUserByPhone(contact: string): Promise<IUser | null>;
+  isExistUserByUsername(username: string): Promise<IUser | null>;
+  isExistUserByChannelName(channelName: string): Promise<IUser | null>;
   isMatchPassword(password: string, hashPassword: string): Promise<boolean>;
 };

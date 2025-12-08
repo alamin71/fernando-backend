@@ -8,7 +8,7 @@ import { notFound } from "./app/middleware/notFound";
 
 import config from "./config";
 import path from "path";
-import stripeWebhook from "./app/modules/payments/stripeWebhook";
+
 const app: Application = express();
 
 app.set("view engine", "ejs");
@@ -16,7 +16,7 @@ app.set("views", path.join(__dirname, "views"));
 //morgan
 app.use(Morgan.successHandler);
 app.use(Morgan.errorHandler);
-app.use("/api/v1/stripe", stripeWebhook);
+
 //body parser
 app.use(
   cors({
