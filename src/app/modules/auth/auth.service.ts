@@ -174,13 +174,20 @@ export const resendSignupOtp = async (signupToken: string) => {
   };
   await user.save();
 
-  await emailHelper.sendEmail(
-    emailTemplate.createAccount({
-      name: user.profileData?.firstName || user.email,
-      otp,
-      email: user.email as string,
-    })
-  );
+  // Send email asynchronously (do not await) to avoid blocking the request
+  const senderName = user.profileData?.firstName || user.email;
+  emailHelper
+    .sendEmail(
+      emailTemplate.createAccount({
+        name: senderName,
+        otp,
+        email: user.email as string,
+      })
+    )
+    .then(() => logger.info(`Resend OTP email queued for ${user.email}`))
+    .catch((err) =>
+      errorLogger.error("Resend OTP email error: " + String(err))
+    );
 
   return {
     message: "OTP resent to email",

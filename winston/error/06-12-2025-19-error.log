@@ -1,2 +1,0 @@
-Sat Dec 06 2025 19:17:12 [SERVER-NAME] error: [31mDatabase connection error[39m 00370000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:1590:SSL alert number 80
-
