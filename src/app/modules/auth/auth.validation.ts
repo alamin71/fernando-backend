@@ -8,25 +8,17 @@ const createSignupZodSchema = z.object({
 });
 
 // Complete signup after OTP verification
-const createSignupCompleteZodSchema = z
-  .object({
-    username: z
-      .string()
-      .min(3, { message: "Username must be at least 3 characters" }),
-    channelName: z
-      .string()
-      .min(3, { message: "Channel name must be at least 3 characters" }),
-    password: z
-      .string()
-      .min(6, { message: "Password must be at least 6 characters" }),
-    confirmPassword: z
-      .string()
-      .min(6, { message: "Confirm password must be at least 6 characters" }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+const createSignupCompleteZodSchema = z.object({
+  username: z
+    .string()
+    .min(3, { message: "Username must be at least 3 characters" }),
+  channelName: z
+    .string()
+    .min(3, { message: "Channel name must be at least 3 characters" }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters" }),
+});
 
 // Verify OTP
 const createVerifyOtpZodSchema = z.object({
