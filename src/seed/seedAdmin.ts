@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { User } from "../app/modules/user/user.model";
+import { Admin } from "../app/modules/admin/admin.model";
 import config from "../config";
 import { USER_ROLES } from "../enums/user";
 import { logger } from "../shared/logger";
@@ -53,6 +54,31 @@ const seedUsers = async () => {
   }
 };
 
+// Function to seed admin (Admin collection)
+const seedAdmin = async () => {
+  try {
+    await Admin.deleteMany();
+
+    const adminPayload = {
+      email: config.super_admin.email,
+      password: config.super_admin.password,
+      role: "super_admin",
+      fullName: "Super Admin",
+    };
+
+    await Admin.create(adminPayload); // pre-save hook hashes password
+
+    logger.info(
+      colors.green(
+        "✨ --------------> Admin seeded successfully <-------------- ✨"
+      )
+    );
+  } catch (err) {
+    logger.error(colors.red("💥 Error seeding admin: 💥"), err);
+    throw err;
+  }
+};
+
 // Connect to MongoDB
 mongoose.connect(config.database_url as string);
 
@@ -64,7 +90,8 @@ const seedSuperAdmin = async () => {
       )
     );
 
-    // Start seeding users
+    // Start seeding admin and users
+    await seedAdmin();
     await seedUsers();
     logger.info(
       colors.green(

@@ -1,31 +1,3 @@
-// import express from "express";
-// import { USER_ROLES } from "../../../enums/user";
-// import { AdminController } from "./admin.controller";
-// import { AdminValidation } from "./admin.validation";
-// import auth from "../../middleware/auth";
-// import validateRequest from "../../middleware/validateRequest";
-// const router = express.Router();
-
-// router.post(
-//   "/create-admin",
-//   auth(USER_ROLES.SUPER_ADMIN),
-//   validateRequest(AdminValidation.createAdminZodSchema),
-//   AdminController.createAdmin
-// );
-
-// router.get(
-//   "/get-admin",
-//   auth(USER_ROLES.SUPER_ADMIN),
-//   AdminController.getAdmin
-// );
-
-// router.delete(
-//   "/:id",
-//   auth(USER_ROLES.SUPER_ADMIN),
-//   AdminController.deleteAdmin
-// );
-
-// export const AdminRoutes = router;
 import { Router } from "express";
 import auth from "../../middleware/auth";
 import { adminControllers } from "./admin.controller";
@@ -35,6 +7,31 @@ const router = Router();
 
 router.post("/login", adminControllers.adminLogin);
 router.get("/me", auth("admin"), adminControllers.getProfile);
+router.get("/stats", auth("admin"), adminControllers.getPlatformStats);
+
+router.get(
+  "/growth-overview",
+  auth("admin"),
+  adminControllers.getGrowthOverview
+);
+router.get(
+  "/recent-creators",
+  auth("admin"),
+  adminControllers.getRecentCreators
+);
+router.get("/users", auth("admin"), adminControllers.listUsers);
+router.patch(
+  "/users/:id/status",
+  auth("admin"),
+  adminControllers.updateUserStatus
+);
+router.get("/users/:id", auth("admin"), adminControllers.getUserById);
+router.get("/streams", auth("admin"), adminControllers.listStreams);
+router.get(
+  "/streams/:id/analytics",
+  auth("admin"),
+  adminControllers.getStreamAnalytics
+);
 
 router.patch(
   "/update-profile",
