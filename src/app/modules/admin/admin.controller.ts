@@ -112,10 +112,8 @@ const verifyOtp = catchAsync(async (req: Request, res: Response) => {
   let resolvedEmail = email;
 
   if (email) {
-    // Normal path: verify against provided email
     await adminService.verifyOtp(email, otp);
   } else {
-    // Fallback: find admin by OTP when email not provided
     const admin = await Admin.findOne({
       "verification.otp": otp,
     });
@@ -156,17 +154,32 @@ const verifyOtp = catchAsync(async (req: Request, res: Response) => {
 const resetPassword = catchAsync(async (req: Request, res: Response) => {
   const { email, newPassword, confirmPassword } = req.body;
 
-  if (!email || !newPassword || !confirmPassword) {
-    throw new AppError(
-      400,
-      "Email, password and confirm password are required"
-    );
+  if (!newPassword || !confirmPassword) {
+    throw new AppError(400, "Password and confirm password are required");
   }
 
   if (newPassword !== confirmPassword)
     throw new AppError(400, "Passwords do not match");
 
-  await adminService.resetPassword(email, newPassword);
+  let resolvedEmail = email;
+
+  if (!resolvedEmail) {
+    const bearer = req.headers.authorization;
+    const resetHeader = (req.headers["x-reset-token"] as string) || undefined;
+    const token = bearer?.startsWith("Bearer ")
+      ? bearer.split(" ")[1]
+      : resetHeader;
+    if (!token) throw new AppError(400, "Reset token is required");
+
+    try {
+      const decoded: any = jwt.verify(token, config.jwt.jwt_secret as string);
+      resolvedEmail = decoded.email;
+    } catch (err) {
+      throw new AppError(400, "Invalid or expired reset token");
+    }
+  }
+
+  await adminService.resetPassword(resolvedEmail, newPassword);
 
   sendResponse(res, {
     statusCode: 200,
