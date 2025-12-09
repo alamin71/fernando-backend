@@ -90,31 +90,26 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const verifiedAdmins = new Map<string, string>();
-const otpStore = new Map<string, string>();
-
 const forgotPassword = catchAsync(async (req: Request, res: Response) => {
-  const otp = await adminService.setForgotOtp(req.body.email);
-  otpStore.set(otp.toString(), req.body.email); // store otp → email
+  const { email } = req.body;
+  const otp = await adminService.setForgotOtp(email);
+
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: "OTP sent successfully, please verify before reset password",
-    data: { otp },
+    data: process.env.NODE_ENV === "development" ? { otp } : {},
   });
 });
 
 const verifyOtp = catchAsync(async (req: Request, res: Response) => {
-  const { otp } = req.body;
+  const { email, otp } = req.body;
 
-  const email = otpStore.get(otp.toString());
-  if (!email) {
-    throw new AppError(400, "OTP mismatch or expired");
+  if (!email || !otp) {
+    throw new AppError(400, "Email and OTP are required");
   }
 
   await adminService.verifyOtp(email, otp);
-  otpStore.delete(otp.toString());
-  verifiedAdmins.set(email, "VERIFIED");
 
   const token = jwt.sign(
     { email },
@@ -133,19 +128,19 @@ const verifyOtp = catchAsync(async (req: Request, res: Response) => {
 });
 
 const resetPassword = catchAsync(async (req: Request, res: Response) => {
-  const { newPassword, confirmPassword } = req.body;
+  const { email, newPassword, confirmPassword } = req.body;
+
+  if (!email || !newPassword || !confirmPassword) {
+    throw new AppError(
+      400,
+      "Email, password and confirm password are required"
+    );
+  }
 
   if (newPassword !== confirmPassword)
     throw new AppError(400, "Passwords do not match");
 
-  const matchedEmail = [...verifiedAdmins.entries()].find(
-    ([email, status]) => status === "VERIFIED"
-  )?.[0];
-
-  if (!matchedEmail) throw new AppError(400, "OTP not verified");
-
-  await adminService.resetPassword(matchedEmail, newPassword);
-  verifiedAdmins.delete(matchedEmail);
+  await adminService.resetPassword(email, newPassword);
 
   sendResponse(res, {
     statusCode: 200,
