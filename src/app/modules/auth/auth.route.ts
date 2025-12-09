@@ -3,6 +3,7 @@ import * as AuthController from "./auth.controller";
 import { AuthValidation } from "./auth.validation";
 import auth from "../../middleware/auth";
 import validateRequest from "../../middleware/validateRequest";
+import { adminControllers } from "../admin/admin.controller";
 
 const router = express.Router();
 
@@ -29,6 +30,19 @@ router.post(
   "/login",
   validateRequest(AuthValidation.createLoginZodSchema),
   AuthController.loginController
+);
+
+// Admin login (same auth namespace)
+router.post("/admin/login", adminControllers.adminLogin);
+
+// Admin forgot/reset/change password
+router.post("/admin/forgot-password", adminControllers.forgotPassword);
+router.post("/admin/verify-otp", adminControllers.verifyOtp);
+router.post("/admin/reset-password", adminControllers.resetPassword);
+router.patch(
+  "/admin/change-password",
+  auth("admin", "super_admin"),
+  adminControllers.changePassword
 );
 router.post(
   "/refresh-token",
