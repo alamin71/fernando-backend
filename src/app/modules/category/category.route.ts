@@ -7,13 +7,20 @@ const router = Router();
 
 // Create category (with image and cover photo upload)
 router.post(
-  "/",
+  "/create-category",
   adminAuth,
   upload.fields([
     { name: "image", maxCount: 1 },
     { name: "coverPhoto", maxCount: 1 },
   ]),
   categoryControllers.createCategory
+);
+
+// Bulk delete categories
+router.post(
+  "/bulk-delete",
+  adminAuth,
+  categoryControllers.bulkDeleteCategories
 );
 
 // Get all categories
@@ -35,12 +42,5 @@ router.patch(
 
 // Delete category
 router.delete("/:id", adminAuth, categoryControllers.deleteCategory);
-
-// Bulk delete categories
-router.post(
-  "/bulk-delete",
-  adminAuth,
-  categoryControllers.bulkDeleteCategories
-);
 
 export const categoryRoutes = router;

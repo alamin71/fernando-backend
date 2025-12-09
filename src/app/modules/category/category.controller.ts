@@ -11,8 +11,13 @@ import QueryBuilder from "../../builder/QueryBuilder";
 const createCategory = catchAsync(async (req: Request, res: Response) => {
   const { name, description } = req.body;
 
+  // Validate name field
+  if (!name || name.trim() === "") {
+    throw new AppError(httpStatus.BAD_REQUEST, "Category name is required");
+  }
+
   // Check if category already exists
-  const existingCategory = await StreamCategory.findOne({ name });
+  const existingCategory = await StreamCategory.findOne({ name: name.trim() });
   if (existingCategory) {
     throw new AppError(httpStatus.CONFLICT, "Category already exists");
   }
@@ -40,7 +45,7 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
   }
 
   const categoryData = {
-    name,
+    name: name.trim(),
     description: description || "",
     image,
     coverPhoto,
