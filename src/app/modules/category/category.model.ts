@@ -12,13 +12,9 @@ const categorySchema = new Schema<IStreamCategory, CategoryModel>(
     },
     image: {
       type: String,
-      default: "",
+      required: true,
     },
     coverPhoto: {
-      type: String,
-      default: "",
-    },
-    description: {
       type: String,
       default: "",
     },

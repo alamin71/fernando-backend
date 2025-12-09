@@ -14,7 +14,6 @@ const streamAnalyticsSchema = new Schema<
       ref: "Stream",
       required: true,
       unique: true,
-      index: true,
     },
     userId: {
       type: Schema.Types.ObjectId as any,

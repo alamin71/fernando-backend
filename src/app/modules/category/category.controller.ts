@@ -9,7 +9,7 @@ import QueryBuilder from "../../builder/QueryBuilder";
 
 // Create category
 const createCategory = catchAsync(async (req: Request, res: Response) => {
-  const { name, description } = req.body;
+  const { name } = req.body;
 
   // Validate name field
   if (!name || name.trim() === "") {
@@ -28,25 +28,39 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
   // Handle multiple file uploads
   if (req.files && typeof req.files === "object") {
     const files = req.files as any;
-    if (files.image) {
-      const imageResult = await uploadToS3(
-        files.image[0],
-        "categories/images/"
-      );
-      image = imageResult.url || "";
+
+    if (files.image && files.image[0]) {
+      try {
+        const imageResult = await uploadToS3(
+          files.image[0],
+          "categories/images"
+        );
+        image = imageResult.url || "";
+      } catch (error) {
+        throw new AppError(httpStatus.BAD_REQUEST, "Main photo upload failed");
+      }
     }
-    if (files.coverPhoto) {
-      const coverResult = await uploadToS3(
-        files.coverPhoto[0],
-        "categories/cover/"
-      );
-      coverPhoto = coverResult.url || "";
+
+    if (files.coverPhoto && files.coverPhoto[0]) {
+      try {
+        const coverResult = await uploadToS3(
+          files.coverPhoto[0],
+          "categories/cover"
+        );
+        coverPhoto = coverResult.url || "";
+      } catch (error) {
+        throw new AppError(httpStatus.BAD_REQUEST, "Cover photo upload failed");
+      }
     }
+  }
+
+  // Validate that at least image is provided
+  if (!image) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Main photo is required");
   }
 
   const categoryData = {
     name: name.trim(),
-    description: description || "",
     image,
     coverPhoto,
     isActive: true,
@@ -65,7 +79,7 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
 // Get all categories with QueryBuilder
 const getAllCategories = catchAsync(async (req: Request, res: Response) => {
   const queryBuilder = new QueryBuilder(StreamCategory.find(), req.query)
-    .search(["name", "description"])
+    .search(["name"])
     .filter()
     .sort()
     .paginate();
@@ -102,7 +116,7 @@ const getCategoryById = catchAsync(async (req: Request, res: Response) => {
 // Update category
 const updateCategory = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, description } = req.body;
+  const { name } = req.body;
 
   const category = await StreamCategory.findById(id);
   if (!category) {
@@ -117,24 +131,35 @@ const updateCategory = catchAsync(async (req: Request, res: Response) => {
     }
   }
 
-  let updateData: any = { name, description };
+  let updateData: any = {};
+  if (name) updateData.name = name;
 
   // Handle file uploads
   if (req.files && typeof req.files === "object") {
     const files = req.files as any;
-    if (files.image) {
-      const imageResult = await uploadToS3(
-        files.image[0],
-        "categories/images/"
-      );
-      updateData.image = imageResult.url || "";
+
+    if (files.image && files.image[0]) {
+      try {
+        const imageResult = await uploadToS3(
+          files.image[0],
+          "categories/images"
+        );
+        updateData.image = imageResult.url || "";
+      } catch (error) {
+        throw new AppError(httpStatus.BAD_REQUEST, "Main photo upload failed");
+      }
     }
-    if (files.coverPhoto) {
-      const coverResult = await uploadToS3(
-        files.coverPhoto[0],
-        "categories/cover/"
-      );
-      updateData.coverPhoto = coverResult.url || "";
+
+    if (files.coverPhoto && files.coverPhoto[0]) {
+      try {
+        const coverResult = await uploadToS3(
+          files.coverPhoto[0],
+          "categories/cover"
+        );
+        updateData.coverPhoto = coverResult.url || "";
+      } catch (error) {
+        throw new AppError(httpStatus.BAD_REQUEST, "Cover photo upload failed");
+      }
     }
   }
 
