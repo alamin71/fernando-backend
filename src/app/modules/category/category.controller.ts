@@ -36,8 +36,12 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
           "categories/images"
         );
         image = imageResult.url || "";
-      } catch (error) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Main photo upload failed");
+      } catch (error: any) {
+        console.error("Image upload error:", error);
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          `Main photo upload failed: ${error.message || "Unknown error"}`
+        );
       }
     }
 
@@ -48,8 +52,12 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
           "categories/cover"
         );
         coverPhoto = coverResult.url || "";
-      } catch (error) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Cover photo upload failed");
+      } catch (error: any) {
+        console.error("Cover photo upload error:", error);
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          `Cover photo upload failed: ${error.message || "Unknown error"}`
+        );
       }
     }
   }
