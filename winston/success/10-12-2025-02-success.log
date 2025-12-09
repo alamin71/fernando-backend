@@ -1,0 +1,4 @@
+Wed Dec 10 2025 2:19:0 [SERVER-NAME] info: [36m🎨 --------------> Database seeding start <--------------- 🎨[39m
+Wed Dec 10 2025 2:19:2 [SERVER-NAME] info: [32m✨ --------------> Admin seeded successfully <-------------- ✨[39m
+Wed Dec 10 2025 2:19:3 [SERVER-NAME] info: [32m✨ --------------> Users seeded successfully <-------------- ✨[39m
+Wed Dec 10 2025 2:19:3 [SERVER-NAME] info: [32m🎉 --------------> Database seeding completed <--------------- 🎉[39m

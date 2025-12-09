@@ -6,24 +6,14 @@
     "auditLog": "C:\\Projects\\fernando-backend\\winston\\success\\.6cc6598a6a72506d25e77870e300a518638dc8db-audit.json",
     "files": [
         {
-            "date": 1765208611082,
-            "name": "C:\\Projects\\fernando-backend\\winston\\success\\08-12-2025-21-success.log",
-            "hash": "0b1974e5da9429f25e55cedb4415b30379ed86cc8f36bfe48456776062d34c9f"
-        },
-        {
-            "date": 1765212083810,
-            "name": "C:\\Projects\\fernando-backend\\winston\\success\\08-12-2025-22-success.log",
-            "hash": "add45741cdbc1df05ed4a40ef781a271255716b2f05d713e8f544e9e89d83f84"
-        },
-        {
-            "date": 1765215805479,
-            "name": "C:\\Projects\\fernando-backend\\winston\\success\\08-12-2025-23-success.log",
-            "hash": "b78fa9e945adf229e4c6c2e5500fc6543ab28c3d5457be1c47c7c173b4153a74"
-        },
-        {
             "date": 1765241064709,
             "name": "C:\\Projects\\fernando-backend\\winston\\success\\09-12-2025-06-success.log",
             "hash": "dae128adfb3207b41b3f88ba729e64a3a3b589707e432ba1c5ce577d7a00f238"
+        },
+        {
+            "date": 1765311540632,
+            "name": "C:\\Projects\\fernando-backend\\winston\\success\\10-12-2025-02-success.log",
+            "hash": "7c64d84ed12224cb6e761666f9bdaa1918cfe5a443684cea9f66bfefdf0eb4b4"
         }
     ],
     "hashType": "sha256"
