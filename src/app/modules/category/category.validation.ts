@@ -16,9 +16,7 @@ const updateCategoryValidation = z.object({
 
 const toggleStatusValidation = z.object({
   body: z.object({
-    isActive: z.boolean({
-      required_error: "isActive is required",
-    }),
+    isActive: z.boolean().describe("isActive is required"),
   }),
 });
 
