@@ -2,3 +2,8 @@ Wed Dec 10 2025 2:19:0 [SERVER-NAME] info: [36m🎨 --------------> Database se
 Wed Dec 10 2025 2:19:2 [SERVER-NAME] info: [32m✨ --------------> Admin seeded successfully <-------------- ✨[39m
 Wed Dec 10 2025 2:19:3 [SERVER-NAME] info: [32m✨ --------------> Users seeded successfully <-------------- ✨[39m
 Wed Dec 10 2025 2:19:3 [SERVER-NAME] info: [32m🎉 --------------> Database seeding completed <--------------- 🎉[39m
+Wed Dec 10 2025 2:48:45 [SERVER-NAME] info: [32mConfig validation successful.[39m
+Wed Dec 10 2025 2:48:46 [SERVER-NAME] info: [46m🚀 Database connected successfully[49m
+Wed Dec 10 2025 2:48:46 [SERVER-NAME] info: [33m♻️  Socket is listening on 0.0.0.0:6002[39m
+Wed Dec 10 2025 2:48:46 [SERVER-NAME] info: [33m♻️  Application listening on http://0.0.0.0:5000[39m
+Wed Dec 10 2025 2:49:17 [SERVER-NAME] info: [34mSIGINT received. Shutting down gracefully...[39m
