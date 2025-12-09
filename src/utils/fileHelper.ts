@@ -20,12 +20,19 @@ export const uploadToS3 = async (file: any, fileName: string) => {
     );
     const uniqueFileName = `${fileName}-${uniqueNumber}-${file.originalname}`;
 
+    console.log("S3 Upload Info:", {
+      bucket: config.aws.bucket,
+      key: uniqueFileName,
+      region: config.aws.region,
+      hasAccessKey: !!config.aws.accessKeyId,
+      hasSecretKey: !!config.aws.secretAccessKey,
+    });
+
     const command = new PutObjectCommand({
       Bucket: config.aws.bucket,
       Key: uniqueFileName,
       Body: file.buffer,
-      ContentType: file.mimetype, // Ensure Content-Type is set
-      // ACL: 'public-read', // Ensure the file is publicly readable
+      ContentType: file.mimetype,
     });
 
     await s3Client.send(command);
@@ -33,7 +40,13 @@ export const uploadToS3 = async (file: any, fileName: string) => {
     // Generate the publicly accessible URL for the file
     const url = `https://${config.aws.bucket}.s3.${config.aws.region}.amazonaws.com/${uniqueFileName}`;
     return { id: uniqueFileName, url };
-  } catch (error) {
+  } catch (error: any) {
+    console.error("S3 Upload Error:", {
+      message: error.message,
+      code: error.code,
+      statusCode: error.$metadata?.httpStatusCode,
+      fullError: error,
+    });
     throw new AppError(httpStatus.BAD_REQUEST, "File Upload failed!");
   }
 };
