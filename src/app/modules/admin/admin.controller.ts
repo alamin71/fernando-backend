@@ -105,14 +105,40 @@ const forgotPassword = catchAsync(async (req: Request, res: Response) => {
 const verifyOtp = catchAsync(async (req: Request, res: Response) => {
   const { email, otp } = req.body;
 
-  if (!email || !otp) {
-    throw new AppError(400, "Email and OTP are required");
+  if (!otp) {
+    throw new AppError(400, "OTP is required");
   }
 
-  await adminService.verifyOtp(email, otp);
+  let resolvedEmail = email;
+
+  if (email) {
+    // Normal path: verify against provided email
+    await adminService.verifyOtp(email, otp);
+  } else {
+    // Fallback: find admin by OTP when email not provided
+    const admin = await Admin.findOne({
+      "verification.otp": otp,
+    });
+
+    if (!admin || !admin.verification) {
+      throw new AppError(400, "Invalid OTP");
+    }
+
+    if (admin.verification.verified) {
+      throw new AppError(400, "OTP already verified");
+    }
+
+    if (Date.now() > new Date(admin.verification.expiresAt).getTime()) {
+      throw new AppError(400, "OTP expired");
+    }
+
+    admin.verification.verified = true;
+    await admin.save();
+    resolvedEmail = admin.email;
+  }
 
   const token = jwt.sign(
-    { email },
+    { email: resolvedEmail },
     config.jwt.jwt_secret as string,
     {
       expiresIn: "15m",
