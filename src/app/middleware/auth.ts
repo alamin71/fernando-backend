@@ -261,9 +261,9 @@ const auth =
         console.error("User not found:", decoded.id);
         throw new AppError(StatusCodes.NOT_FOUND, "User not found!!");
       }
-      if (user.status === "BLOCKED") {
-        console.error("User blocked:", decoded.id);
-        throw new AppError(StatusCodes.FORBIDDEN, "User blocked!!");
+      if (user.status === "REJECTED") {
+        console.error("User rejected:", decoded.id);
+        throw new AppError(StatusCodes.FORBIDDEN, "User account rejected!!");
       }
       if (user.isDeleted) {
         console.error("User deleted:", decoded.id);

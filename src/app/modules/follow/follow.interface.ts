@@ -1,10 +1,10 @@
-import { Model, Document } from "mongoose";
+import { Model } from "mongoose";
 
-export interface IFollow extends Document {
-  _id: string;
+export interface IFollow {
+  _id?: string;
   followerId: string; // User who is following
   followingId: string; // User being followed (Creator)
-  createdAt: Date;
+  createdAt?: Date;
 }
 
 export type FollowModel = Model<IFollow>;

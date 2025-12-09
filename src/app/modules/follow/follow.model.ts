@@ -3,8 +3,18 @@ import { IFollow, FollowModel } from "./follow.interface";
 
 const followSchema = new Schema<IFollow, FollowModel>(
   {
-    followerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    followingId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    followerId: {
+      type: Schema.Types.ObjectId as any,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    followingId: {
+      type: Schema.Types.ObjectId as any,
+      ref: "User",
+      required: true,
+      index: true,
+    },
   },
   { timestamps: true }
 );
@@ -23,8 +33,22 @@ followSchema.statics.getFollowingStreams = async function (
   // Get users that current user follows, then get their live streams
   return await this.aggregate([
     { $match: { followerId: userId } },
-    { $lookup: { from: "users", localField: "followingId", foreignField: "_id", as: "creator" } },
-    { $lookup: { from: "streams", localField: "followingId", foreignField: "creatorId", as: "streams" } },
+    {
+      $lookup: {
+        from: "users",
+        localField: "followingId",
+        foreignField: "_id",
+        as: "creator",
+      },
+    },
+    {
+      $lookup: {
+        from: "streams",
+        localField: "followingId",
+        foreignField: "creatorId",
+        as: "streams",
+      },
+    },
     { $unwind: "$streams" },
     { $match: { "streams.status": "LIVE" } },
     { $limit: limit },
