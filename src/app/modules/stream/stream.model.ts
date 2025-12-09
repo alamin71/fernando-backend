@@ -39,6 +39,9 @@ const streamSchema = new Schema<IStream, StreamModel>(
     // WebRTC
     rtcServerUrl: { type: String },
     streamUrl: { type: String },
+
+    // Report tracking
+    isReported: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );

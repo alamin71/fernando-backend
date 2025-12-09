@@ -197,7 +197,7 @@ const getPlatformStats = catchAsync(async (req: Request, res: Response) => {
   const totalCreators = await User.countDocuments({ role: "CREATOR" });
   const totalStreams = await Stream.countDocuments();
   const liveStreams = await Stream.countDocuments({ status: "LIVE" });
-  const offlineStreams = await Stream.countDocuments({ status: "OFFLINE" });
+  const reportedStreams = await Stream.countDocuments({ isReported: true });
   const scheduledStreams = await Stream.countDocuments({ status: "SCHEDULED" });
 
   sendResponse(res, {
@@ -209,7 +209,7 @@ const getPlatformStats = catchAsync(async (req: Request, res: Response) => {
       totalCreators,
       totalStreams,
       liveStreams,
-      offlineStreams,
+      reportedStreams,
       scheduledStreams,
     },
   });

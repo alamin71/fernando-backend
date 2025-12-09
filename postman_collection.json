@@ -1,0 +1,411 @@
+{
+  "info": {
+    "name": "Fernando - Admin Dashboard API",
+    "description": "Complete Admin Dashboard API Collection for Live Streaming Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Admin Auth",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"superadmin@gmail.com\",\n  \"password\": \"hello123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/login",
+              "host": ["{{baseURL}}"],
+              "path": ["api", "v1", "admin", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Admin Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/me",
+              "host": ["{{baseURL}}"],
+              "path": ["api", "v1", "admin", "me"]
+            }
+          }
+        },
+        {
+          "name": "Update Admin Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Super Admin\",\n  \"phoneNumber\": \"+880123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/update-profile",
+              "host": ["{{baseURL}}"],
+              "path": ["api", "v1", "admin", "update-profile"]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oldPassword\": \"hello123\",\n  \"newPassword\": \"newPassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/change-password",
+              "host": ["{{baseURL}}"],
+              "path": ["api", "v1", "admin", "change-password"]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"superadmin@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/forgot-password",
+              "host": ["{{baseURL}}"],
+              "path": ["api", "v1", "admin", "forgot-password"]
+            }
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"superadmin@gmail.com\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/verify-otp",
+              "host": ["{{baseURL}}"],
+              "path": ["api", "v1", "admin", "verify-otp"]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resetToken\": \"{{resetToken}}\",\n  \"newPassword\": \"hello123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/reset-password",
+              "host": ["{{baseURL}}"],
+              "path": ["api", "v1", "admin", "reset-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard Stats",
+      "item": [
+        {
+          "name": "Get Platform Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/stats",
+              "host": ["{{baseURL}}"],
+              "path": ["api", "v1", "admin", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Growth Overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/growth-overview",
+              "host": ["{{baseURL}}"],
+              "path": ["api", "v1", "admin", "growth-overview"]
+            }
+          }
+        },
+        {
+          "name": "Get Recently Joined Creators",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/recent-creators",
+              "host": ["{{baseURL}}"],
+              "path": ["api", "v1", "admin", "recent-creators"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users Management",
+      "item": [
+        {
+          "name": "List All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/users?page=1&limit=10",
+              "host": ["{{baseURL}}"],
+              "path": ["api", "v1", "admin", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "role",
+                  "value": "CREATOR",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/users/507f1f77bcf86cd799439012",
+              "host": ["{{baseURL}}"],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                "507f1f77bcf86cd799439012"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Block/Unblock User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"BLOCKED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/users/507f1f77bcf86cd799439012/status",
+              "host": ["{{baseURL}}"],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                "507f1f77bcf86cd799439012",
+                "status"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Streams Management",
+      "item": [
+        {
+          "name": "List All Streams",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/streams?page=1&limit=10",
+              "host": ["{{baseURL}}"],
+              "path": ["api", "v1", "admin", "streams"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "LIVE",
+                  "disabled": true
+                },
+                {
+                  "key": "categoryId",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Stream Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/api/v1/admin/streams/507f1f77bcf86cd799439013/analytics",
+              "host": ["{{baseURL}}"],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "streams",
+                "507f1f77bcf86cd799439013",
+                "analytics"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseURL",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "resetToken",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

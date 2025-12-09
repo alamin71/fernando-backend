@@ -25,6 +25,9 @@ export interface IStream {
   rtcServerUrl?: string; // SFU/MCU server endpoint
   streamUrl?: string; // HLS/RTMP fallback URL
 
+  // Report tracking
+  isReported?: boolean;
+
   createdAt: Date;
   updatedAt: Date;
 }
