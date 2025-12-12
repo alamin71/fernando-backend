@@ -31,7 +31,7 @@ router.get("/:id", categoryControllers.getCategoryById);
 
 // Update category
 router.patch(
-  "/:id",
+  "update/:id",
   adminAuth,
   upload.fields([
     { name: "image", maxCount: 1 },
@@ -41,6 +41,6 @@ router.patch(
 );
 
 // Delete category
-router.delete("/:id", adminAuth, categoryControllers.deleteCategory);
+router.delete("delete/:id", adminAuth, categoryControllers.deleteCategory);
 
 export const categoryRoutes = router;
