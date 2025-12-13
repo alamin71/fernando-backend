@@ -33,7 +33,6 @@ const streamAnalyticsSchema = new Schema<
 );
 
 // Indexes
-streamAnalyticsSchema.index({ streamId: 1 });
 streamAnalyticsSchema.index({ userId: 1, createdAt: -1 });
 
 // TTL index - auto-delete after 3 months
