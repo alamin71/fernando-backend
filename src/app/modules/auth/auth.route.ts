@@ -47,7 +47,7 @@ router.post(
   validateRequest(AuthValidation.verifyForgotPasswordOtpZodSchema),
   AuthController.verifyForgotPasswordOtpController
 );
-router.patch(
+router.post(
   "/reset-password",
   validateRequest(AuthValidation.resetPasswordZodSchema),
   AuthController.resetPasswordController
