@@ -45,7 +45,6 @@ const adminLogin = catchAsync(async (req: Request, res: Response) => {
         email: admin.email,
         role: admin.role,
       },
-      token: accessToken, // backward-compatible
       accessToken,
       refreshToken,
       expiresIn: "2h",

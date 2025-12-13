@@ -177,7 +177,7 @@ export const login = async (email: string, password: string) => {
     .trim()
     .toLowerCase();
   const user = await User.findOne({ email: normalizedEmail }).select(
-    "+password verified"
+    "+password"
   );
   if (!user) throw new AppError(StatusCodes.BAD_REQUEST, "User not found");
 
