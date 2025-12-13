@@ -213,10 +213,23 @@ export const login = async (email: string, password: string) => {
   const refreshToken = jwtHelper.createRefreshToken(payload);
 
   const { password: _, ...userData } = user.toObject();
+  // Return a minimal user payload (exclude heavy nested fields)
+  const minimalUser = {
+    _id: user._id,
+    email: user.email,
+    role: user.role,
+    username: user.username,
+    channelName: user.channelName,
+    verified: user.verified,
+    status: user.status,
+    image: user.image,
+    createdAt: (user as any).createdAt,
+    updatedAt: (user as any).updatedAt,
+  };
 
   return {
     message: "Login successful",
-    user: userData,
+    user: minimalUser,
     accessToken,
     refreshToken,
   };
