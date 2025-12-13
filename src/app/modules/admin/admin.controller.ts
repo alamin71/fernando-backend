@@ -11,6 +11,7 @@ import { Admin } from "./admin.model";
 import { User } from "../user/user.model";
 import { Stream } from "../stream/stream.model";
 import { StreamAnalytics } from "../stream/streamAnalytics.model";
+import { jwtHelper } from "../../../helpers/jwtHelper";
 
 // -------------------- Admin Auth --------------------
 const adminLogin = catchAsync(async (req: Request, res: Response) => {
@@ -22,11 +23,17 @@ const adminLogin = catchAsync(async (req: Request, res: Response) => {
   if (!isMatch)
     throw new AppError(httpStatus.UNAUTHORIZED, "Incorrect password");
 
-  const token = jwt.sign(
-    { id: admin._id, role: admin.role },
+  const payload = { id: admin._id, role: admin.role, email: admin.email };
+
+  // Access token with 2h expiry
+  const accessToken = jwt.sign(
+    payload,
     config.jwt.jwt_secret as string,
-    { expiresIn: process.env.JWT_EXPIRES_IN || "1d" } as SignOptions
+    { expiresIn: "2h" } as SignOptions
   );
+
+  // Refresh token using configured secret/expiry
+  const refreshToken = jwtHelper.createRefreshToken(payload);
 
   sendResponse(res, {
     statusCode: 200,
@@ -38,7 +45,10 @@ const adminLogin = catchAsync(async (req: Request, res: Response) => {
         email: admin.email,
         role: admin.role,
       },
-      token,
+      token: accessToken, // backward-compatible
+      accessToken,
+      refreshToken,
+      expiresIn: "2h",
     },
   });
 });

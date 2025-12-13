@@ -89,11 +89,20 @@ export const loginController = catchAsync(
   async (req: Request, res: Response) => {
     const { email, password } = req.body;
     const result = await AuthService.login(email, password);
+
+    // Expose username and channelName at top-level in the response
+    const username = (result as any)?.user?.username;
+    const channelName = (result as any)?.user?.channelName;
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: result.message,
-      data: result,
+      data: {
+        ...result,
+        username,
+        channelName,
+      },
     });
   }
 );
