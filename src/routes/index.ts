@@ -24,7 +24,7 @@ const routes = [
     route: categoryRoutes,
   },
   {
-    path: "/settings",
+    path: "/admin/settings",
     route: settingsRoutes,
   },
 ];
