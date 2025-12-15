@@ -25,6 +25,16 @@ const streamSchema = new Schema<IStream, StreamModel>(
       index: true,
     },
     isPublic: { type: Boolean, default: true, index: true },
+    // Recording and playback
+    recordingUrl: { type: String, default: "" },
+    playbackUrl: { type: String, default: "" },
+    durationSeconds: { type: Number, default: 0 },
+    whoCanMessage: {
+      type: String,
+      enum: ["everyone", "followers"],
+      default: "everyone",
+    },
+    isMature: { type: Boolean, default: false },
     startedAt: { type: Date, index: true },
     endedAt: { type: Date },
     scheduledAt: { type: Date },

@@ -10,6 +10,11 @@ export interface IStream {
   streamKey: string; // Unique key for WebRTC broadcast
   status: "LIVE" | "OFFLINE" | "SCHEDULED"; // Current stream status
   isPublic: boolean;
+  whoCanMessage?: "everyone" | "followers";
+  isMature?: boolean;
+  recordingUrl?: string;
+  playbackUrl?: string;
+  durationSeconds?: number;
   startedAt?: Date;
   endedAt?: Date;
   scheduledAt?: Date; // For scheduled streams
