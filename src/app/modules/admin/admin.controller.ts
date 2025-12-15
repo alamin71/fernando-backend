@@ -273,98 +273,6 @@ const getRecentCreators = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// -------------------- Users --------------------
-const listUsers = catchAsync(async (req: Request, res: Response) => {
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 20;
-  const role = req.query.role as string | undefined;
-  const status = req.query.status as string | undefined;
-  const search = req.query.search as string | undefined;
-
-  const filter: any = {};
-  if (role) filter.role = role;
-  if (status) filter.status = status;
-  if (search) {
-    filter.$or = [
-      { username: { $regex: search, $options: "i" } },
-      { email: { $regex: search, $options: "i" } },
-      { channelName: { $regex: search, $options: "i" } },
-    ];
-  }
-
-  const users = await User.find(filter)
-    .select(
-      "_id username email role status image channelName creatorStats verified"
-    )
-    .skip((page - 1) * limit)
-    .limit(limit)
-    .lean();
-  const total = await User.countDocuments(filter);
-
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: "Users fetched successfully",
-    data: {
-      users,
-      total,
-      page,
-      limit,
-    },
-  });
-});
-
-const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.params.id;
-  const { status } = req.body;
-  if (!["ACTIVE", "BLOCKED"].includes(status)) {
-    return sendResponse(res, {
-      statusCode: 400,
-      success: false,
-      message: "Invalid status value",
-      data: null,
-    });
-  }
-  const user = await User.findByIdAndUpdate(userId, { status }, { new: true });
-  if (!user) {
-    return sendResponse(res, {
-      statusCode: 404,
-      success: false,
-      message: "User not found",
-      data: null,
-    });
-  }
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: `User status updated to ${status}`,
-    data: user,
-  });
-});
-
-const getUserById = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.params.id;
-  const user = await User.findById(userId)
-    .select(
-      "_id username email role status image channelName creatorStats verified profileData followers following createdAt updatedAt"
-    )
-    .lean();
-  if (!user) {
-    return sendResponse(res, {
-      statusCode: 404,
-      success: false,
-      message: "User not found",
-      data: null,
-    });
-  }
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: "User profile fetched successfully",
-    data: user,
-  });
-});
-
 // -------------------- Streams --------------------
 const listStreams = catchAsync(async (req: Request, res: Response) => {
   const page = Number(req.query.page) || 1;
@@ -581,9 +489,6 @@ export const adminControllers = {
   resetPassword,
   getProfile,
   getPlatformStats,
-  listUsers,
-  updateUserStatus,
-  getUserById,
   listStreams,
   getStreamAnalytics,
   getGrowthOverview,

@@ -1,5 +1,4 @@
 import { Router } from "express";
-import auth from "../../middleware/auth";
 import adminAuth from "../../middleware/adminAuth";
 import { adminControllers } from "./admin.controller";
 import upload from "../../middleware/fileUpload";
@@ -21,9 +20,6 @@ router.post(
   adminAuth,
   adminControllers.bulkDeleteCreators
 );
-router.get("/users", adminAuth, adminControllers.listUsers);
-router.patch("/users/:id/status", adminAuth, adminControllers.updateUserStatus);
-router.get("/users/:id", adminAuth, adminControllers.getUserById);
 router.get("/streams", adminAuth, adminControllers.listStreams);
 router.get(
   "/streams/:id/analytics",
