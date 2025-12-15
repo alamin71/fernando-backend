@@ -165,7 +165,7 @@ const userSchema = new Schema<IUser, UserModel>(
     status: {
       type: String,
       enum: ["PENDING", "ACTIVE", "REJECTED"],
-      default: "PENDING",
+      default: "ACTIVE",
     },
     verified: { type: Boolean, default: false, index: true },
     isDeleted: { type: Boolean, default: false, index: true },
