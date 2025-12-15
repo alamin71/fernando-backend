@@ -12,6 +12,15 @@ router.get("/stats", adminAuth, adminControllers.getPlatformStats);
 
 router.get("/growth-overview", adminAuth, adminControllers.getGrowthOverview);
 router.get("/recent-creators", adminAuth, adminControllers.getRecentCreators);
+router.get("/creators", adminAuth, adminControllers.getAllCreators);
+router.get("/creators/export", adminAuth, adminControllers.exportCreators);
+router.get("/creators/:id", adminAuth, adminControllers.getCreatorById);
+router.delete("/creators/:id", adminAuth, adminControllers.deleteCreator);
+router.post(
+  "/creators/bulk-delete",
+  adminAuth,
+  adminControllers.bulkDeleteCreators
+);
 router.get("/users", adminAuth, adminControllers.listUsers);
 router.patch("/users/:id/status", adminAuth, adminControllers.updateUserStatus);
 router.get("/users/:id", adminAuth, adminControllers.getUserById);
