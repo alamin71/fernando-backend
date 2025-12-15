@@ -200,10 +200,8 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 
 // -------------------- Dashboard Stats --------------------
 const getPlatformStats = catchAsync(async (req: Request, res: Response) => {
-  const totalUsers = await User.countDocuments({
-    role: { $in: ["USER", "CREATOR"] },
-  });
-  const totalCreators = await User.countDocuments({ role: "CREATOR" });
+  const totalUsers = await User.countDocuments({ role: "creator" });
+  const totalCreators = totalUsers;
   const totalStreams = await Stream.countDocuments();
   const liveStreams = await Stream.countDocuments({ status: "LIVE" });
   const reportedStreams = await Stream.countDocuments({ isReported: true });
@@ -230,7 +228,7 @@ const getGrowthOverview = catchAsync(async (req: Request, res: Response) => {
   startDate.setDate(startDate.getDate() - days);
 
   const creators = await User.aggregate([
-    { $match: { role: "CREATOR", createdAt: { $gte: startDate } } },
+    { $match: { role: "creator", createdAt: { $gte: startDate } } },
     {
       $group: {
         _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -260,7 +258,7 @@ const getGrowthOverview = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getRecentCreators = catchAsync(async (req: Request, res: Response) => {
-  const creators = await User.find({ role: "CREATOR" })
+  const creators = await User.find({ role: "creator" })
     .select("_id channelName username createdAt creatorStats image")
     .sort({ createdAt: -1 })
     .limit(10)
