@@ -18,7 +18,7 @@ const usersData = [
   {
     name: "User",
     email: "user@gmail.com",
-    role: USER_ROLES.USER,
+    role: USER_ROLES.ADMIN,
     password: "hello123",
     verified: true,
   },

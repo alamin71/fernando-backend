@@ -11,11 +11,11 @@ const router = express.Router();
 router
   .route("/profile")
   .get(
-    auth(USER_ROLES.ADMIN, USER_ROLES.USER, USER_ROLES.CREATOR),
+    auth(USER_ROLES.ADMIN, USER_ROLES.CREATOR),
     UserController.getUserProfile
   )
   .patch(
-    auth(USER_ROLES.ADMIN, USER_ROLES.USER, USER_ROLES.CREATOR),
+    auth(USER_ROLES.ADMIN, USER_ROLES.CREATOR),
 
     upload.single("file"),
     validateRequest(UserValidation.updateUserZodSchema),
@@ -28,6 +28,10 @@ router
     UserController.createUser
   );
 
-router.delete("/delete", auth(USER_ROLES.USER), UserController.deleteProfile);
+router.delete(
+  "/delete",
+  auth(USER_ROLES.CREATOR),
+  UserController.deleteProfile
+);
 
 export const UserRouter = router;

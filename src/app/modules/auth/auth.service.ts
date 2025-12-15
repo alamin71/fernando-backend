@@ -29,7 +29,7 @@ export const signupInit = async (payload: SignupPayload) => {
     payload.role &&
     Object.values(USER_ROLES).includes(payload.role as USER_ROLES)
       ? payload.role
-      : USER_ROLES.USER;
+      : USER_ROLES.CREATOR;
 
   // Simple profile data for all users (Creator or User)
   const profileData = {

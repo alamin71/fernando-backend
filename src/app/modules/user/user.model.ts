@@ -137,7 +137,7 @@ const userSchema = new Schema<IUser, UserModel>(
     role: {
       type: String,
       enum: Object.values(USER_ROLES),
-      default: USER_ROLES.USER,
+      default: USER_ROLES.CREATOR,
     },
     email: {
       type: String,

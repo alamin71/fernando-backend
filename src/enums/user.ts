@@ -1,7 +1,6 @@
 export enum USER_ROLES {
-  ADMIN = "ADMIN",
-  CREATOR = "CREATOR",
-  USER = "USER",
+  ADMIN = "admin",
+  CREATOR = "creator",
 }
 
 export enum USER_STATUS {
