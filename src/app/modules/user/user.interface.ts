@@ -124,6 +124,7 @@ export type IUser = {
 
   followers?: string[];
   following?: string[];
+  likedStreams?: string[]; // Stream IDs that user has liked
 
   authentication?: {
     isResetPassword?: boolean;

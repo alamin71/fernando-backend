@@ -135,10 +135,112 @@ const getCreatorStreams = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Update stream settings
+const updateStream = catchAsync(async (req: Request, res: Response) => {
+  const creatorId = req.user.id;
+  const { id } = req.params;
+  const {
+    title,
+    description,
+    categoryId,
+    thumbnail,
+    isPublic,
+    whoCanMessage,
+    isMature,
+  } = req.body;
+
+  let resolvedThumbnail = thumbnail;
+  if (req.file) {
+    const uploaded = await uploadToS3(req.file, "stream-thumbnails/");
+    resolvedThumbnail = uploaded?.url || uploaded;
+  }
+
+  const result = await streamService.updateStream(id, creatorId, {
+    title,
+    description,
+    categoryId,
+    thumbnail: resolvedThumbnail,
+    isPublic,
+    whoCanMessage,
+    isMature,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Stream updated successfully",
+    data: result,
+  });
+});
+
+// Increment view count
+const incrementViewCount = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user?.id;
+
+  const result = await streamService.incrementViewCount(id, userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "View count updated",
+    data: result,
+  });
+});
+
+// Decrement viewer count
+const decrementViewCount = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const result = await streamService.decrementViewCount(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Viewer count updated",
+    data: result,
+  });
+});
+
+// Toggle like on stream
+const toggleLike = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  const result = await streamService.toggleLike(id, userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: result.liked ? "Stream liked" : "Stream unliked",
+    data: result,
+  });
+});
+
+// Get stream analytics
+const getStreamAnalytics = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const creatorId = req.user.id;
+
+  const result = await streamService.getStreamAnalytics(id, creatorId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Stream analytics retrieved successfully",
+    data: result,
+  });
+});
+
 export const streamControllers = {
   startLive,
   endLive,
   getStreamById,
   getLiveStreams,
   getCreatorStreams,
+  updateStream,
+  incrementViewCount,
+  decrementViewCount,
+  toggleLike,
+  getStreamAnalytics,
 };

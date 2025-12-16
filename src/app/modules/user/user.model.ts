@@ -68,6 +68,7 @@ const userSchema = new Schema<IUser, UserModel>(
     // Social connections
     followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
     following: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    likedStreams: [{ type: Schema.Types.ObjectId, ref: "Stream" }], // Streams user has liked
 
     authentication: {
       isResetPassword: { type: Boolean, default: false },

@@ -26,7 +26,25 @@ const endStreamSchema = z.object({
   durationSeconds: z.coerce.number().int().nonnegative().optional(),
 });
 
+const updateStreamSchema = z.object({
+  title: z
+    .string()
+    .min(3, "Title must be at least 3 characters")
+    .max(100, "Title cannot exceed 100 characters")
+    .optional(),
+  description: z
+    .string()
+    .max(500, "Description cannot exceed 500 characters")
+    .optional(),
+  categoryId: z.string().optional(),
+  thumbnail: z.string().optional(),
+  isPublic: z.coerce.boolean().optional(),
+  whoCanMessage: z.enum(["everyone", "followers"]).optional(),
+  isMature: z.coerce.boolean().optional(),
+});
+
 export const streamValidation = {
   createStreamSchema,
   endStreamSchema,
+  updateStreamSchema,
 };

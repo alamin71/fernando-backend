@@ -246,10 +246,180 @@ const getCreatorStreams = async (
   };
 };
 
+// Update stream settings
+const updateStream = async (
+  streamId: string,
+  creatorId: string,
+  payload: Partial<{
+    title: string;
+    description: string;
+    categoryId: string;
+    thumbnail: string;
+    isPublic: boolean;
+    whoCanMessage: "everyone" | "followers";
+    isMature: boolean;
+  }>
+) => {
+  const stream = await Stream.findById(streamId);
+
+  if (!stream) {
+    throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
+  }
+
+  if (stream.creatorId.toString() !== creatorId) {
+    throw new AppError(httpStatus.FORBIDDEN, "Unauthorized");
+  }
+
+  const updatedStream = await Stream.findByIdAndUpdate(streamId, payload, {
+    new: true,
+    runValidators: true,
+  })
+    .populate("creatorId", "username channelName image")
+    .populate("categoryId", "name");
+
+  return updatedStream;
+};
+
+// Increment view count
+const incrementViewCount = async (streamId: string, userId?: string) => {
+  const stream = await Stream.findById(streamId);
+
+  if (!stream) {
+    throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
+  }
+
+  if (stream.status !== "LIVE") {
+    throw new AppError(httpStatus.BAD_REQUEST, "Stream is not live");
+  }
+
+  // Update stream stats
+  const updatedStream = await Stream.findByIdAndUpdate(
+    streamId,
+    {
+      $inc: { totalViews: 1, currentViewers: 1 },
+      $max: { peakViewers: (stream.currentViewers || 0) + 1 },
+    },
+    { new: true }
+  );
+
+  // Update analytics
+  await StreamAnalytics.findOneAndUpdate(
+    { streamId },
+    {
+      $inc: { viewCount: 1, uniqueViewers: userId ? 1 : 0 },
+      $max: {
+        peakConcurrentViewers: (stream.currentViewers || 0) + 1,
+      },
+    },
+    { upsert: true }
+  );
+
+  return {
+    currentViewers: updatedStream?.currentViewers || 0,
+    totalViews: updatedStream?.totalViews || 0,
+  };
+};
+
+// Decrement viewer count (when viewer leaves)
+const decrementViewCount = async (streamId: string) => {
+  const stream = await Stream.findById(streamId);
+
+  if (!stream) {
+    throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
+  }
+
+  await Stream.findByIdAndUpdate(streamId, {
+    $inc: { currentViewers: -1 },
+    $max: { currentViewers: 0 }, // Prevent negative values
+  });
+
+  return { success: true };
+};
+
+// Toggle like on stream
+const toggleLike = async (streamId: string, userId: string) => {
+  const stream = await Stream.findById(streamId);
+
+  if (!stream) {
+    throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
+  }
+
+  // Check if user already liked this stream
+  const user = await User.findById(userId);
+  const hasLiked = user?.likedStreams?.includes(streamId);
+
+  if (hasLiked) {
+    // Unlike
+    await User.findByIdAndUpdate(userId, {
+      $pull: { likedStreams: streamId },
+    });
+    await Stream.findByIdAndUpdate(streamId, {
+      $inc: { totalLikes: -1 },
+      $max: { totalLikes: 0 },
+    });
+    await StreamAnalytics.findOneAndUpdate(
+      { streamId },
+      { $inc: { likes: -1 }, $max: { likes: 0 } }
+    );
+
+    return { liked: false, totalLikes: Math.max(0, stream.totalLikes - 1) };
+  } else {
+    // Like
+    await User.findByIdAndUpdate(userId, {
+      $addToSet: { likedStreams: streamId },
+    });
+    await Stream.findByIdAndUpdate(streamId, {
+      $inc: { totalLikes: 1 },
+    });
+    await StreamAnalytics.findOneAndUpdate(
+      { streamId },
+      { $inc: { likes: 1 } },
+      { upsert: true }
+    );
+
+    return { liked: true, totalLikes: stream.totalLikes + 1 };
+  }
+};
+
+// Get stream analytics
+const getStreamAnalytics = async (streamId: string, creatorId: string) => {
+  const stream = await Stream.findById(streamId);
+
+  if (!stream) {
+    throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
+  }
+
+  if (stream.creatorId.toString() !== creatorId) {
+    throw new AppError(httpStatus.FORBIDDEN, "Unauthorized");
+  }
+
+  const analytics = await StreamAnalytics.findOne({ streamId });
+
+  return {
+    streamId: stream._id,
+    title: stream.title,
+    status: stream.status,
+    startedAt: stream.startedAt,
+    endedAt: stream.endedAt,
+    durationSeconds: stream.durationSeconds,
+    currentViewers: stream.currentViewers,
+    peakViewers: stream.peakViewers,
+    totalViews: stream.totalViews,
+    totalLikes: stream.totalLikes,
+    totalComments: stream.totalComments,
+    analytics: analytics || {},
+  };
+};
+
 export const streamService = {
   startLive,
   endLive,
   getStreamById,
   getLiveStreams,
   getCreatorStreams,
+  updateStream,
+  incrementViewCount,
+  decrementViewCount,
+  toggleLike,
+  getStreamAnalytics,
 };
