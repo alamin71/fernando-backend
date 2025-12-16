@@ -87,7 +87,13 @@ const startLive = async (
     streamId: stream._id,
     streamKey,
     title: stream.title,
+    description: stream.description,
+    categoryId: stream.categoryId,
+    thumbnail: stream.thumbnail,
     status: stream.status,
+    isPublic: stream.isPublic,
+    whoCanMessage: stream.whoCanMessage,
+    isMature: stream.isMature,
     startedAt: stream.startedAt,
   };
 };
