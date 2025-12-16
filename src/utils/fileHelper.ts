@@ -129,3 +129,85 @@ export const deleteManyFromS3 = async (keys: string[]) => {
     throw new AppError(httpStatus.BAD_REQUEST, "S3 file delete failed");
   }
 };
+
+// Upload stream recording to S3
+export const uploadStreamRecordingToS3 = async (
+  file: any,
+  streamId: string
+) => {
+  try {
+    const timestamp = Date.now();
+    const fileName = `stream-recordings/${streamId}/${timestamp}-${file.originalname}`;
+
+    console.log("Recording Upload Info:", {
+      bucket: config.aws.bucket,
+      key: fileName,
+      size: file.size,
+      mimetype: file.mimetype,
+    });
+
+    const command = new PutObjectCommand({
+      Bucket: config.aws.bucket,
+      Key: fileName,
+      Body: file.buffer,
+      ContentType: file.mimetype || "video/mp4",
+      // Add metadata for better organization
+      Metadata: {
+        streamId: streamId,
+        uploadedAt: timestamp.toString(),
+      },
+    });
+
+    await s3Client.send(command);
+
+    const url = `https://${config.aws.bucket}.s3.${config.aws.region}.amazonaws.com/${fileName}`;
+    return { id: fileName, url };
+  } catch (error: any) {
+    console.error("Recording Upload Error:", error);
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Recording upload failed: " + error.message
+    );
+  }
+};
+
+// Upload recording from URL to S3 (for external recording services)
+export const uploadRecordingFromUrl = async (
+  videoUrl: string,
+  streamId: string
+): Promise<{ url: string; id: string }> => {
+  try {
+    // Fetch video from URL
+    const response = await fetch(videoUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch video: ${response.statusText}`);
+    }
+
+    const buffer = await response.arrayBuffer();
+    const timestamp = Date.now();
+    const fileName = `stream-recordings/${streamId}/${timestamp}-recording.mp4`;
+
+    const command = new PutObjectCommand({
+      Bucket: config.aws.bucket,
+      Key: fileName,
+      Body: Buffer.from(buffer),
+      ContentType: "video/mp4",
+      Metadata: {
+        streamId: streamId,
+        uploadedAt: timestamp.toString(),
+        source: "external",
+      },
+    });
+
+    await s3Client.send(command);
+
+    const url = `https://${config.aws.bucket}.s3.${config.aws.region}.amazonaws.com/${fileName}`;
+    return { id: fileName, url };
+  } catch (error: any) {
+    console.error("Recording URL Upload Error:", error);
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Failed to upload recording from URL: " + error.message
+    );
+  }
+};

@@ -3,7 +3,10 @@ import httpStatus from "http-status";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { streamService } from "./stream.service";
-import { uploadToS3 } from "../../../utils/fileHelper";
+import {
+  uploadToS3,
+  uploadStreamRecordingToS3,
+} from "../../../utils/fileHelper";
 
 // Start live stream
 const startLive = catchAsync(async (req: Request, res: Response) => {
@@ -232,6 +235,84 @@ const getStreamAnalytics = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Get all recorded/archived streams
+const getRecordedStreams = catchAsync(async (req: Request, res: Response) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 20;
+  const creatorId = req.query.creatorId as string | undefined;
+  const categoryId = req.query.categoryId as string | undefined;
+  const search = req.query.search as string | undefined;
+
+  const result = await streamService.getRecordedStreams({
+    page,
+    limit,
+    creatorId,
+    categoryId,
+    search,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Recorded streams retrieved successfully",
+    data: result.streams,
+    meta: {
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPage: Math.ceil(result.total / result.limit || 1),
+    },
+  });
+});
+
+// Get specific stream recording
+const getStreamRecording = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const result = await streamService.getStreamRecording(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Stream recording retrieved successfully",
+    data: result,
+  });
+});
+
+// Upload stream recording to S3
+const uploadRecording = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const creatorId = req.user.id;
+
+  if (!req.file) {
+    sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: "Recording file is required",
+    });
+    return;
+  }
+
+  // Upload to S3
+  const uploaded = await uploadStreamRecordingToS3(req.file, id);
+
+  // Update stream with recording URL
+  const result = await streamService.endLive(id, creatorId, {
+    recordingUrl: uploaded.url,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Recording uploaded successfully",
+    data: {
+      ...result,
+      recordingUrl: uploaded.url,
+      recordingId: uploaded.id,
+    },
+  });
+});
+
 export const streamControllers = {
   startLive,
   endLive,
@@ -243,4 +324,7 @@ export const streamControllers = {
   decrementViewCount,
   toggleLike,
   getStreamAnalytics,
+  getRecordedStreams,
+  getStreamRecording,
+  uploadRecording,
 };

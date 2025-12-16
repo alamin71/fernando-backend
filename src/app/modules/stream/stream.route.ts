@@ -7,13 +7,17 @@ import { streamControllers } from "./stream.controller";
 
 const router = Router();
 
+// ==================== STREAM LIFECYCLE ====================
+
 /**
- * POST /api/v1/streams/start
- * Creator starts a live stream
- * Auth required
+ * 🔴 START LIVE STREAM (Go Live)
+ * POST /api/v1/streams/go-live
+ * Purpose: Creator streams শুরু করবে (title, thumbnail, settings সহ)
+ * Auth: Creator only
+ * Body: title, description, thumbnail (file), categoryId, isPublic, whoCanMessage, isMature
  */
 router.post(
-  "/start",
+  "/go-live",
   auth("creator"),
   upload.single("thumbnail"),
   validateZodSchema(streamValidation.createStreamSchema),
@@ -21,67 +25,110 @@ router.post(
 );
 
 /**
- * PATCH /api/v1/streams/:id/end
- * Creator ends their live stream
- * Auth required
+ * ⚫ END LIVE STREAM (Stop Stream)
+ * PATCH /api/v1/streams/:id/stop-live
+ * Purpose: Creator stream বন্ধ করবে (optional: recording URL দিয়ে)
+ * Auth: Creator only (must own the stream)
+ * Body: recordingUrl, playbackUrl, durationSeconds (all optional)
  */
 router.patch(
-  "/:id/end",
+  "/:id/stop-live",
   auth("creator"),
   validateZodSchema(streamValidation.endStreamSchema),
   streamControllers.endLive
 );
 
 /**
- * GET /api/v1/streams/live
- * Get all live streams (for viewers)
- * Supports filtering by category and search
- */
-router.get("/live", streamControllers.getLiveStreams);
-
-/**
- * GET /api/v1/streams/my-streams
- * Get creator's all streams
- * Auth required
- */
-router.get("/my-streams", auth("creator"), streamControllers.getCreatorStreams);
-
-/**
- * PATCH /api/v1/streams/:id
- * Update stream settings
- * Auth required
+ * ⚫ END LIVE STREAM (Stop Stream)
+ * PATCH /api/v1/streams/:id/stop-live
+ * Purpose: Creator stream বন্ধ করবে (optional: recording URL দিয়ে)
+ * Auth: Creator only (must own the stream)
+ * Body: recordingUrl, playbackUrl, durationSeconds (all optional)
  */
 router.patch(
-  "/:id",
+  "/:id/stop-live",
+  auth("creator"),
+  validateZodSchema(streamValidation.endStreamSchema),
+  streamControllers.endLive
+);
+
+/**
+ * ✏️ UPDATE STREAM SETTINGS
+ * PATCH /api/v1/streams/:id/settings
+ * Purpose: Live stream চলাকালীন settings update (title, privacy, etc.)
+ * Auth: Creator only (must own the stream)
+ * Body: title, description, thumbnail, isPublic, whoCanMessage, isMature (all optional)
+ */
+router.patch(
+  "/:id/settings",
   auth("creator"),
   upload.single("thumbnail"),
   validateZodSchema(streamValidation.updateStreamSchema),
   streamControllers.updateStream
 );
 
-/**
- * POST /api/v1/streams/:id/view
- * Increment view count when viewer joins
- */
-router.post("/:id/view", streamControllers.incrementViewCount);
+// ==================== DISCOVER STREAMS ====================
 
 /**
- * DELETE /api/v1/streams/:id/view
- * Decrement viewer count when viewer leaves
+ * 🔴 GET LIVE STREAMS (Currently Broadcasting)
+ * GET /api/v1/streams/currently-live
+ * Purpose: এখন যেসব stream LIVE আছে তার list (public feed)
+ * Auth: Not required
+ * Query: page, limit, categoryId, search
  */
-router.delete("/:id/view", streamControllers.decrementViewCount);
+router.get("/currently-live", streamControllers.getLiveStreams);
 
 /**
+ * 📹 GET RECORDED STREAMS (Past Streams with Recordings)
+ * GET /api/v1/streams/recordings
+ * Purpose: যেসব stream শেষ হয়েছে এবং recording আছে
+ * Auth: Not required
+ * Query: page, limit, creatorId, categoryId, search
+ */
+router.get("/recordings", streamControllers.getRecordedStreams);
+
+/**
+ * 📊 GET MY STREAMS (Creator's Own Streams)
+ * GET /api/v1/streams/my-streams
+ * Purpose: Creator নিজের সব stream দেখবে (LIVE/OFFLINE/SCHEDULED)
+ * Auth: Creator only
+ * Query: page, limit, status (LIVE|OFFLINE|SCHEDULED)
+ */
+router.get("/my-streams", auth("creator"), streamControllers.getCreatorStreams);
+
+// ==================== VIEWER INTERACTIONS ====================
+
+/**
+ * 👁️ JOIN STREAM (Increment Viewer Count)
+ * POST /api/v1/streams/:id/join
+ * Purpose: Viewer stream e join করেছে (view count বাড়াবে)
+ * Auth: Optional (authenticated users tracked for analytics)
+ */
+router.post("/:id/join", streamControllers.incrementViewCount);
+
+/**
+ * 👋 LEAVE STREAM (Decrement Viewer Count)
+ * DELETE /api/v1/streams/:id/leave
+ * Purpose: Viewer stream থেকে চলে গেছে (viewer count কমাবে)
+ * Auth: Not required
+ */
+router.delete("/:id/leave", streamControllers.decrementViewCount);
+
+/**
+ * ❤️ LIKE/UNLIKE STREAM
  * POST /api/v1/streams/:id/like
- * Toggle like on stream
- * Auth required
+ * Purpose: Stream like/unlike toggle করা
+ * Auth: Creator only
  */
 router.post("/:id/like", auth("creator"), streamControllers.toggleLike);
 
+// ==================== ANALYTICS & RECORDINGS ====================
+
 /**
+ * 📊 GET STREAM ANALYTICS (Performance Stats)
  * GET /api/v1/streams/:id/analytics
- * Get stream analytics (creator only)
- * Auth required
+ * Purpose: Creator নিজের stream এর detailed analytics দেখবে
+ * Auth: Creator only (must own the stream)
  */
 router.get(
   "/:id/analytics",
@@ -90,8 +137,34 @@ router.get(
 );
 
 /**
+ * 🎬 GET STREAM RECORDING (Watch Recording)
+ * GET /api/v1/streams/:id/watch
+ * Purpose: Recorded stream এর video URL পাওয়া (playback এর জন্য)
+ * Auth: Not required
+ */
+router.get("/:id/watch", streamControllers.getStreamRecording);
+
+/**
+ * 📤 UPLOAD STREAM RECORDING (Save to S3)
+ * POST /api/v1/streams/:id/upload-recording
+ * Purpose: Stream শেষে recording file S3 এ upload করা
+ * Auth: Creator only (must own the stream)
+ * Body: recording (video file - multipart/form-data)
+ */
+router.post(
+  "/:id/upload-recording",
+  auth("creator"),
+  upload.single("recording"),
+  streamControllers.uploadRecording
+);
+
+// ==================== STREAM DETAILS ====================
+
+/**
+ * 📺 GET STREAM BY ID (Full Details)
  * GET /api/v1/streams/:id
- * Get stream details with analytics
+ * Purpose: একটা specific stream এর complete info (creator, analytics, status)
+ * Auth: Not required
  */
 // Place after more specific routes to avoid catching them
 router.get("/:id", streamControllers.getStreamById);

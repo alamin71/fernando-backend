@@ -411,6 +411,90 @@ const getStreamAnalytics = async (streamId: string, creatorId: string) => {
   };
 };
 
+// Get recorded/archived streams (completed streams with recordings)
+const getRecordedStreams = async (filters: {
+  page: number;
+  limit: number;
+  creatorId?: string;
+  categoryId?: string;
+  search?: string;
+}) => {
+  const { page, limit, creatorId, categoryId, search } = filters;
+
+  const filterObj: any = {
+    status: "OFFLINE",
+    recordingUrl: { $exists: true, $ne: "" }, // Only streams with recordings
+  };
+
+  if (creatorId) {
+    filterObj.creatorId = creatorId;
+  }
+
+  if (categoryId) {
+    filterObj.categoryId = categoryId;
+  }
+
+  if (search) {
+    filterObj.$or = [
+      { title: { $regex: search, $options: "i" } },
+      { description: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  const streams = await Stream.find(filterObj)
+    .populate("creatorId", "username channelName image creatorStats")
+    .populate("categoryId", "name")
+    .select("-streamKey")
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .sort({ endedAt: -1 }) // Latest ended streams first
+    .lean();
+
+  const total = await Stream.countDocuments(filterObj);
+
+  return {
+    streams,
+    total,
+    page,
+    limit,
+  };
+};
+
+// Get recording URL for a specific stream
+const getStreamRecording = async (streamId: string) => {
+  const stream = await Stream.findById(streamId)
+    .populate("creatorId", "username channelName image")
+    .populate("categoryId", "name")
+    .select("-streamKey");
+
+  if (!stream) {
+    throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
+  }
+
+  if (!stream.recordingUrl) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Recording not available for this stream"
+    );
+  }
+
+  return {
+    streamId: stream._id,
+    title: stream.title,
+    description: stream.description,
+    thumbnail: stream.thumbnail,
+    recordingUrl: stream.recordingUrl,
+    playbackUrl: stream.playbackUrl,
+    durationSeconds: stream.durationSeconds,
+    totalViews: stream.totalViews,
+    totalLikes: stream.totalLikes,
+    startedAt: stream.startedAt,
+    endedAt: stream.endedAt,
+    creatorId: stream.creatorId,
+    categoryId: stream.categoryId,
+  };
+};
+
 export const streamService = {
   startLive,
   endLive,
@@ -422,4 +506,6 @@ export const streamService = {
   decrementViewCount,
   toggleLike,
   getStreamAnalytics,
+  getRecordedStreams,
+  getStreamRecording,
 };

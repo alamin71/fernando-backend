@@ -1,5 +1,21 @@
 # Stream API Documentation - Postman Collection
 
+**Version:** 1.0.0 | **Last Updated:** December 16, 2025 | **Status:** ✅ Production Ready
+
+---
+
+## Quick Links
+
+- [Base URL & Authentication](#base-url)
+- [Stream Lifecycle APIs](#-stream-apis)
+- [Discover & Viewer APIs](#-discover--viewer-apis)
+- [Analytics & Recording APIs](#-analytics--recording-apis)
+- [Postman Setup](#-postman-setup)
+- [Environment Variables](#-postman-environment-variables)
+- [Collection Import Instructions](#-import-postman-collection)
+
+---
+
 ## Base URL
 
 ```
@@ -20,7 +36,7 @@ Authorization: Bearer <your_jwt_token>
 
 ### 1. Start Live Stream (Go Live)
 
-**POST** `/start`
+**POST** `/go-live`
 
 **Auth Required:** Yes (Creator)
 
@@ -64,7 +80,7 @@ isMature: false
 **Postman Setup:**
 
 1. Method: POST
-2. URL: `{{BASE_URL}}/streams/start`
+2. URL: `{{BASE_URL}}/streams/go-live`
 3. Headers:
    - `Authorization: Bearer {{token}}`
 4. Body → form-data:
@@ -79,7 +95,7 @@ isMature: false
 
 ### 2. End Live Stream
 
-**PATCH** `/:id/end`
+**PATCH** `/:id/stop-live`
 
 **Auth Required:** Yes (Creator - must own the stream)
 
@@ -113,7 +129,7 @@ _All fields optional - if durationSeconds not provided, calculated from start/en
 **Postman Setup:**
 
 1. Method: PATCH
-2. URL: `{{BASE_URL}}/streams/{{streamId}}/end`
+2. URL: `{{BASE_URL}}/streams/{{streamId}}/stop-live`
 3. Headers: `Authorization: Bearer {{token}}`
 4. Body → raw (JSON)
 
@@ -121,7 +137,7 @@ _All fields optional - if durationSeconds not provided, calculated from start/en
 
 ### 3. Update Stream Settings
 
-**PATCH** `/:id`
+**PATCH** `/:id/settings`
 
 **Auth Required:** Yes (Creator - must own the stream)
 
@@ -168,15 +184,15 @@ _All fields optional - if durationSeconds not provided, calculated from start/en
 **Postman Setup:**
 
 1. Method: PATCH
-2. URL: `{{BASE_URL}}/streams/{{streamId}}`
+2. URL: `{{BASE_URL}}/streams/{{streamId}}/settings`
 3. Headers: `Authorization: Bearer {{token}}`
 4. Body → raw (JSON) or form-data (if uploading new thumbnail)
 
 ---
 
-### 4. Get All Live Streams
+### 4. Get All Live Streams (Currently Live)
 
-**GET** `/live`
+**GET** `/currently-live`
 
 **Auth Required:** No
 
@@ -190,7 +206,7 @@ _All fields optional - if durationSeconds not provided, calculated from start/en
 **Example:**
 
 ```
-GET /live?page=1&limit=10&categoryId=65abc123&search=gaming
+GET /currently-live?page=1&limit=10&categoryId=65abc123&search=gaming
 ```
 
 **Response:**
@@ -238,7 +254,7 @@ GET /live?page=1&limit=10&categoryId=65abc123&search=gaming
 **Postman Setup:**
 
 1. Method: GET
-2. URL: `{{BASE_URL}}/streams/live`
+2. URL: `{{BASE_URL}}/streams/currently-live`
 3. Params: page=1, limit=10, search=gaming
 
 ---
@@ -361,7 +377,7 @@ GET /my-streams?page=1&limit=10&status=LIVE
 
 ### 7. Increment View Count (Join Stream)
 
-**POST** `/:id/view`
+**POST** `/:id/join`
 
 **Auth Required:** No (but userId tracked if authenticated)
 
@@ -384,14 +400,14 @@ GET /my-streams?page=1&limit=10&status=LIVE
 **Postman Setup:**
 
 1. Method: POST
-2. URL: `{{BASE_URL}}/streams/{{streamId}}/view`
+2. URL: `{{BASE_URL}}/streams/{{streamId}}/join`
 3. Headers (optional): `Authorization: Bearer {{token}}`
 
 ---
 
 ### 8. Decrement Viewer Count (Leave Stream)
 
-**DELETE** `/:id/view`
+**DELETE** `/:id/leave`
 
 **Auth Required:** No
 
@@ -413,7 +429,7 @@ GET /my-streams?page=1&limit=10&status=LIVE
 **Postman Setup:**
 
 1. Method: DELETE
-2. URL: `{{BASE_URL}}/streams/{{streamId}}/view`
+2. URL: `{{BASE_URL}}/streams/{{streamId}}/leave`
 
 ---
 
@@ -527,15 +543,15 @@ streamId = <test_stream_id>
 ### Scenario: Creator Goes Live and Viewer Watches
 
 1. **Creator Login** → Get token
-2. **Start Stream** → POST `/start` → Get `streamId` & `streamKey`
+2. **Start Stream** → POST `/go-live` → Get `streamId` & `streamKey`
 3. **Frontend:** Use `streamKey` to initialize WebRTC broadcast
-4. **Viewer:** GET `/live` → See live streams
+4. **Viewer:** GET `/currently-live` → See live streams
 5. **Viewer:** GET `/:id` → Get stream details
-6. **Viewer:** POST `/:id/view` → Join stream (increment viewers)
+6. **Viewer:** POST `/:id/join` → Join stream (increment viewers)
 7. **Viewer:** POST `/:id/like` → Like the stream
-8. **Viewer:** DELETE `/:id/view` → Leave stream (decrement viewers)
+8. **Viewer:** DELETE `/:id/leave` → Leave stream (decrement viewers)
 9. **Creator:** GET `/:id/analytics` → Check stream performance
-10. **Creator:** PATCH `/:id/end` → End stream
+10. **Creator:** PATCH `/:id/stop-live` → End stream
 
 ---
 
@@ -545,16 +561,16 @@ streamId = <test_stream_id>
 
 ```
 Stream APIs/
-├── 01 - Start Live Stream
-├── 02 - Get All Live Streams
-├── 03 - Get Single Stream
-├── 04 - Join Stream (Increment View)
-├── 05 - Like Stream
-├── 06 - Get My Streams
-├── 07 - Update Stream Settings
-├── 08 - Get Stream Analytics
-├── 09 - Leave Stream (Decrement View)
-└── 10 - End Live Stream
+├── 01 - Start Live Stream (go-live)
+├── 02 - Get All Live Streams (currently-live)
+├── 03 - Get Single Stream (:id)
+├── 04 - Join Stream (join)
+├── 05 - Like Stream (like)
+├── 06 - Get My Streams (my-streams)
+├── 07 - Update Stream Settings (settings)
+├── 08 - Get Stream Analytics (analytics)
+├── 09 - Leave Stream (leave)
+└── 10 - Stop Live Stream (stop-live)
 ```
 
 ### Pre-request Script (Collection Level):
@@ -673,7 +689,7 @@ Save this as `Stream_APIs.postman_collection.json`:
             { "key": "thumbnail", "type": "file", "src": "" }
           ]
         },
-        "url": "{{BASE_URL}}/streams/start"
+        "url": "{{BASE_URL}}/streams/go-live"
       }
     },
     {
@@ -681,7 +697,7 @@ Save this as `Stream_APIs.postman_collection.json`:
       "request": {
         "method": "GET",
         "url": {
-          "raw": "{{BASE_URL}}/streams/live?page=1&limit=10",
+          "raw": "{{BASE_URL}}/streams/currently-live?page=1&limit=10",
           "query": [
             { "key": "page", "value": "1" },
             { "key": "limit", "value": "10" }
@@ -720,7 +736,7 @@ Save this as `Stream_APIs.postman_collection.json`:
           "mode": "raw",
           "raw": "{\n  \"durationSeconds\": 3600\n}"
         },
-        "url": "{{BASE_URL}}/streams/{{streamId}}/end"
+        "url": "{{BASE_URL}}/streams/{{streamId}}/stop-live"
       }
     }
   ]
@@ -771,3 +787,11 @@ Copy token from response → Set as {{token}} in Postman environment
 **Ready to test! 🎉**
 
 All APIs are now implemented and documented. Use this guide with Postman to test the complete streaming platform.
+
+---
+
+## 📚 Related Documentation
+
+- **[COMPLETE_STREAM_GUIDE.md](COMPLETE_STREAM_GUIDE.md)** - Full streaming platform documentation with all 13 endpoints and React components
+- **[API_QUICK_REFERENCE.md](API_QUICK_REFERENCE.md)** - Quick lookup for all stream endpoints, query parameters, and status codes
+- **[RECORDING_GUIDE.md](RECORDING_GUIDE.md)** - AWS S3 integration, recording flows, and code examples for streaming servers
