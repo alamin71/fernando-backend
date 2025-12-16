@@ -28,10 +28,6 @@ const startLive = async (
     throw new AppError(httpStatus.NOT_FOUND, "Creator not found");
   }
 
-  if (creator.status !== "ACTIVE") {
-    throw new AppError(httpStatus.FORBIDDEN, "Your account is not active");
-  }
-
   // Check if creator already has an active LIVE stream
   const existingLiveStream = await Stream.findOne({
     creatorId,
