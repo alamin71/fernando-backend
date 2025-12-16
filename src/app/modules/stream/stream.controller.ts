@@ -21,7 +21,7 @@ const startLive = catchAsync(async (req: Request, res: Response) => {
   let resolvedThumbnail = thumbnail;
   if (req.file) {
     const uploaded = await uploadToS3(req.file, "stream-thumbnails/");
-    resolvedThumbnail = uploaded;
+    resolvedThumbnail = uploaded?.url || uploaded;
   }
 
   const result = await streamService.startLive(creatorId, {
