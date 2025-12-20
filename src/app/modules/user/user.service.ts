@@ -92,6 +92,100 @@ const createVendorToDB = async (payload: Partial<IUser>): Promise<IUser> => {
   return newVendor;
 };
 
+// ============ CHANNEL CUSTOMIZATION ============
+
+// Update channel photos
+const updateChannelPhotos = async (
+  userId: string,
+  photoData: { profilePhoto?: string; coverPhoto?: string }
+): Promise<Partial<IUser>> => {
+  const user = await User.findByIdAndUpdate(userId, photoData, { new: true });
+  if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+  return user;
+};
+
+// Update channel info
+const updateChannelInfo = async (
+  userId: string,
+  infoData: { channelName?: string; username?: string; description?: string }
+): Promise<Partial<IUser>> => {
+  const user = await User.findByIdAndUpdate(userId, infoData, { new: true });
+  if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+  return user;
+};
+
+// Add social account
+const addSocialAccount = async (
+  userId: string,
+  socialData: { platform: string; url: string; displayName: string }
+): Promise<IUser | null> => {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { $push: { socialAccounts: socialData } },
+    { new: true }
+  );
+  if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+  return user;
+};
+
+// Update social account
+const updateSocialAccount = async (
+  userId: string,
+  socialId: string,
+  updateData: { url?: string; displayName?: string }
+): Promise<IUser | null> => {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        "socialAccounts.$[elem].url": updateData.url,
+        "socialAccounts.$[elem].displayName": updateData.displayName,
+      },
+    },
+    {
+      arrayFilters: [{ "elem._id": socialId }],
+      new: true,
+    }
+  );
+  if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+  return user;
+};
+
+// Delete social account
+const deleteSocialAccount = async (
+  userId: string,
+  socialId: string
+): Promise<IUser | null> => {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { $pull: { socialAccounts: { _id: socialId } } },
+    { new: true }
+  );
+  if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+  return user;
+};
+
+// Get channel details
+const getChannelDetails = async (userId: string): Promise<Partial<IUser>> => {
+  const user = await User.findById(userId)
+    .select(
+      "channelName username description profilePhoto coverPhoto socialAccounts creatorStats"
+    )
+    .populate("followers", "username image")
+    .lean();
+
+  if (!user) throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+
+  const followerCount = await User.findById(userId).countDocuments({
+    _id: { $in: (user as any).followers },
+  });
+
+  return {
+    ...user,
+    followerCount,
+  };
+};
+
 export const UserService = {
   createUserToDB,
   getUserProfileFromDB,
@@ -99,4 +193,10 @@ export const UserService = {
   verifyUserPassword,
   deleteUser,
   createVendorToDB,
+  updateChannelPhotos,
+  updateChannelInfo,
+  addSocialAccount,
+  updateSocialAccount,
+  deleteSocialAccount,
+  getChannelDetails,
 };

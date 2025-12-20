@@ -65,6 +65,31 @@ const userSchema = new Schema<IUser, UserModel>(
     streamKey: { type: String, sparse: true, select: false },
     streamKeyUpdatedAt: { type: Date, sparse: true },
 
+    // Channel Customization
+    profilePhoto: { type: String, default: "" },
+    coverPhoto: { type: String, default: "" },
+    description: { type: String, default: "" },
+    socialAccounts: [
+      {
+        _id: { type: Schema.Types.ObjectId, auto: true },
+        platform: {
+          type: String,
+          enum: [
+            "twitter",
+            "instagram",
+            "youtube",
+            "twitch",
+            "discord",
+            "tiktok",
+            "facebook",
+          ],
+        },
+        url: { type: String, required: true },
+        displayName: { type: String, default: "" },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+
     // Social connections
     followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
     following: [{ type: Schema.Types.ObjectId, ref: "User" }],

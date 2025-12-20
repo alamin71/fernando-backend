@@ -34,4 +34,78 @@ router.delete(
   UserController.deleteProfile
 );
 
+// ============ CHANNEL CUSTOMIZATION ROUTES ============
+
+/**
+ * 🖼️ UPDATE CHANNEL PHOTOS
+ * PATCH /api/v1/users/:id/channel-photos
+ * Purpose: Upload profile + cover photos
+ * Auth: Creator only
+ */
+router.patch(
+  "/:id/channel-photos",
+  auth(USER_ROLES.CREATOR),
+  upload.fields([
+    { name: "profilePhoto", maxCount: 1 },
+    { name: "coverPhoto", maxCount: 1 },
+  ]),
+  UserController.updateChannelPhotos
+);
+
+/**
+ * ℹ️ UPDATE CHANNEL INFO
+ * PATCH /api/v1/users/:id/channel-info
+ * Purpose: Update channel name, username, description
+ * Auth: Creator only
+ */
+router.patch(
+  "/:id/channel-info",
+  auth(USER_ROLES.CREATOR),
+  UserController.updateChannelInfo
+);
+
+/**
+ * 🔗 ADD SOCIAL ACCOUNT
+ * POST /api/v1/users/:id/social-accounts
+ * Purpose: Add social media links
+ * Auth: Creator only
+ */
+router.post(
+  "/:id/social-accounts",
+  auth(USER_ROLES.CREATOR),
+  UserController.addSocialAccount
+);
+
+/**
+ * ✏️ UPDATE SOCIAL ACCOUNT
+ * PATCH /api/v1/users/:id/social-accounts/:socialId
+ * Purpose: Edit social media link
+ * Auth: Creator only
+ */
+router.patch(
+  "/:id/social-accounts/:socialId",
+  auth(USER_ROLES.CREATOR),
+  UserController.updateSocialAccount
+);
+
+/**
+ * 🗑️ DELETE SOCIAL ACCOUNT
+ * DELETE /api/v1/users/:id/social-accounts/:socialId
+ * Purpose: Remove social media link
+ * Auth: Creator only
+ */
+router.delete(
+  "/:id/social-accounts/:socialId",
+  auth(USER_ROLES.CREATOR),
+  UserController.deleteSocialAccount
+);
+
+/**
+ * 📋 GET CHANNEL DETAILS
+ * GET /api/v1/users/:id/channel-details
+ * Purpose: Get complete channel info (public)
+ * Auth: Not required
+ */
+router.get("/:id/channel-details", UserController.getChannelDetails);
+
 export const UserRouter = router;
