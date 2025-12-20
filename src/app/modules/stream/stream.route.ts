@@ -70,6 +70,18 @@ router.patch(
 // ==================== DISCOVER STREAMS ====================
 
 /**
+ * 🎬 GET IVS INGEST CONFIG (For Web Broadcast)
+ * GET /api/v1/streams/ingest-config
+ * Purpose: Creator web broadcast এর জন্য IVS ingest endpoint + stream key
+ * Auth: Creator only
+ */
+router.get(
+  "/ingest-config",
+  auth("creator"),
+  streamControllers.getIngestConfig
+);
+
+/**
  * 🔴 GET LIVE STREAMS (Currently Broadcasting)
  * GET /api/v1/streams/currently-live
  * Purpose: এখন যেসব stream LIVE আছে তার list (public feed)

@@ -3,6 +3,7 @@ import httpStatus from "http-status";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { streamService } from "./stream.service";
+import config from "../../../config";
 import {
   uploadToS3,
   uploadStreamRecordingToS3,
@@ -313,6 +314,35 @@ const uploadRecording = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Get IVS Ingest Configuration (for web broadcast)
+const getIngestConfig = catchAsync(async (req: Request, res: Response) => {
+  const ingestServer = process.env.IVS_INGEST_ENDPOINT;
+  const streamKey = process.env.IVS_STREAM_KEY;
+  const playbackUrl = process.env.IVS_PLAYBACK_URL;
+  const channelArn = process.env.IVS_CHANNEL_ARN;
+
+  if (!ingestServer || !streamKey || !playbackUrl) {
+    sendResponse(res, {
+      statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: "IVS configuration not found",
+    });
+    return;
+  }
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "IVS ingest configuration retrieved",
+    data: {
+      ingestServer,
+      streamKey,
+      playbackUrl,
+      channelArn,
+    },
+  });
+});
+
 export const streamControllers = {
   startLive,
   endLive,
@@ -327,4 +357,5 @@ export const streamControllers = {
   getRecordedStreams,
   getStreamRecording,
   uploadRecording,
+  getIngestConfig,
 };

@@ -62,4 +62,10 @@ export default {
     secretAccessKey: process.env.secretAccessKey,
     bucket: process.env.AWS_BUCKET_NAME,
   },
+  ivs: {
+    ingestEndpoint: process.env.IVS_INGEST_ENDPOINT,
+    streamKey: process.env.IVS_STREAM_KEY,
+    playbackUrl: process.env.IVS_PLAYBACK_URL,
+    channelArn: process.env.IVS_CHANNEL_ARN,
+  },
 };
