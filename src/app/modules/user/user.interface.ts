@@ -104,6 +104,21 @@ export type CreatorStats = {
   totalLikes?: number;
 };
 
+export type SocialAccount = {
+  _id?: string;
+  platform?:
+    | "twitter"
+    | "instagram"
+    | "youtube"
+    | "twitch"
+    | "discord"
+    | "tiktok"
+    | "facebook";
+  url?: string;
+  displayName?: string;
+  createdAt?: Date;
+};
+
 export type IUser = {
   _id?: string;
   role: USER_ROLES;
@@ -112,12 +127,17 @@ export type IUser = {
   username?: string;
   channelName?: string;
   image?: string;
+  profilePhoto?: string;
+  coverPhoto?: string;
+  description?: string;
   verified?: boolean;
   isDeleted?: boolean;
   status?: "PENDING" | "ACTIVE" | "REJECTED";
 
   profileData?: ProfileData;
   creatorStats?: CreatorStats;
+
+  socialAccounts?: SocialAccount[];
 
   streamKey?: string;
   streamKeyUpdatedAt?: Date;
@@ -131,6 +151,8 @@ export type IUser = {
     oneTimeCode?: number;
     expireAt?: Date;
   };
+
+  followerCount?: number; // derived field used in channel details response
 
   createdAt?: Date;
   updatedAt?: Date;
