@@ -208,6 +208,8 @@ export const login = async (email: string, password: string) => {
     id: user._id.toString(),
     role: user.role,
     email: user.email,
+    channelName: user.channelName,
+    username: user.username,
   };
   const accessToken = jwtHelper.createAccessToken(payload);
   const refreshToken = jwtHelper.createRefreshToken(payload);
