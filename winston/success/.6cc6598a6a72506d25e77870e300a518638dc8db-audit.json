@@ -6,19 +6,9 @@
     "auditLog": "C:\\Projects\\fernando-backend\\winston\\success\\.6cc6598a6a72506d25e77870e300a518638dc8db-audit.json",
     "files": [
         {
-            "date": 1765241064709,
-            "name": "C:\\Projects\\fernando-backend\\winston\\success\\09-12-2025-06-success.log",
-            "hash": "dae128adfb3207b41b3f88ba729e64a3a3b589707e432ba1c5ce577d7a00f238"
-        },
-        {
-            "date": 1765311540632,
-            "name": "C:\\Projects\\fernando-backend\\winston\\success\\10-12-2025-02-success.log",
-            "hash": "7c64d84ed12224cb6e761666f9bdaa1918cfe5a443684cea9f66bfefdf0eb4b4"
-        },
-        {
-            "date": 1765321135927,
-            "name": "C:\\Projects\\fernando-backend\\winston\\success\\10-12-2025-04-success.log",
-            "hash": "ac98cb5bb61fb6ce497a497b3daaca7e289f844e82cb2bf8b62cbdb2f736a6a9"
+            "date": 1766514404973,
+            "name": "C:\\Projects\\fernando-backend\\winston\\success\\24-12-2025-00-success.log",
+            "hash": "0b7b6a34d107209ee6d420ebec64f767a52ee2137b55d3dbfaddfd7231c9742b"
         }
     ],
     "hashType": "sha256"
