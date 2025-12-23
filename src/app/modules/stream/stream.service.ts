@@ -109,6 +109,10 @@ const startLive = async (
     { new: true }
   );
 
+  // IVS playback URL for viewers
+  const playbackUrl = config.ivs.playbackUrl || "";
+  const ingestEndpoint = config.ivs.ingestEndpoint || "";
+
   return {
     streamId: stream._id,
     streamKey,
@@ -121,6 +125,13 @@ const startLive = async (
     whoCanMessage: stream.whoCanMessage,
     isMature: stream.isMature,
     startedAt: stream.startedAt,
+
+    // For creator (OBS/streaming software)
+    ingestEndpoint,
+
+    // For viewers (public watch URL)
+    playbackUrl,
+    watchUrl: `/watch/${stream._id}`, // Frontend route
   };
 };
 
