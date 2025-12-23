@@ -68,4 +68,7 @@ export default {
     playbackUrl: process.env.IVS_PLAYBACK_URL,
     channelArn: process.env.IVS_CHANNEL_ARN,
   },
+  chat: {
+    ttl_days: process.env.CHAT_TTL_DAYS, // set to 0 or unset to keep forever
+  },
 };

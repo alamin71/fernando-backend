@@ -2,8 +2,8 @@ import { Router } from "express";
 import auth from "../../middleware/auth";
 import upload from "../../middleware/fileUpload";
 import validateZodSchema from "../../middleware/validateZodSchema";
-import { streamValidation } from "./stream.validation";
-import { streamControllers } from "./stream.controller";
+import { streamValidation, chatValidation } from "./stream.validation";
+import { streamControllers, streamChatControllers } from "./stream.controller";
 
 const router = Router();
 
@@ -79,6 +79,30 @@ router.get(
   "/ingest-config",
   auth("creator"),
   streamControllers.getIngestConfig
+);
+
+// ==================== CHAT ROUTES ====================
+
+// Get chat messages (public)
+router.get(
+  "/:id/chat",
+  validateZodSchema(chatValidation.getMessages),
+  streamChatControllers.getChatMessages
+);
+
+// Send a chat message (auth required)
+router.post(
+  "/:id/chat",
+  auth(),
+  validateZodSchema(chatValidation.sendMessage),
+  streamChatControllers.postChatMessage
+);
+
+// Delete a chat message (owner only)
+router.delete(
+  "/:id/chat/:messageId",
+  auth("creator"),
+  streamChatControllers.deleteChatMessage
 );
 
 /**

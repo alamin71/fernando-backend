@@ -1,5 +1,6 @@
 import { model, Schema } from "mongoose";
 import { IStreamChat, StreamChatModel } from "./streamChat.interface";
+import config from "../../../config";
 
 const streamChatSchema = new Schema<IStreamChat, StreamChatModel>(
   {
@@ -19,8 +20,16 @@ const streamChatSchema = new Schema<IStreamChat, StreamChatModel>(
 // Index for fast chat retrieval
 streamChatSchema.index({ streamId: 1, createdAt: -1 });
 
-// TTL index - delete chat messages after 3 months
-streamChatSchema.index({ createdAt: 1 }, { expireAfterSeconds: 7776000 });
+// Optional TTL (in days). If CHAT_TTL_DAYS not set or 0, keep forever.
+const ttlDays = Number(config.chat?.ttl_days || 0);
+if (ttlDays > 0) {
+  streamChatSchema.index(
+    { createdAt: 1 },
+    {
+      expireAfterSeconds: ttlDays * 24 * 60 * 60,
+    }
+  );
+}
 
 // Limit chat history per stream (keep only last 1000 messages in memory)
 streamChatSchema.statics.getRecentChat = async function (
@@ -38,3 +47,20 @@ export const StreamChat = model<IStreamChat, StreamChatModel>(
   "StreamChat",
   streamChatSchema
 );
+
+// If TTL disabled but an old TTL index exists, attempt to drop it once at runtime.
+if (!ttlDays) {
+  // Best-effort cleanup; ignore errors if index doesn't exist or permissions restricted.
+  (async () => {
+    try {
+      const indexes = await StreamChat.collection.indexes();
+      const ttlIdx = indexes.find(
+        (i: any) =>
+          i.name === "createdAt_1" && typeof i.expireAfterSeconds === "number"
+      );
+      if (ttlIdx) {
+        await StreamChat.collection.dropIndex("createdAt_1");
+      }
+    } catch {}
+  })();
+}

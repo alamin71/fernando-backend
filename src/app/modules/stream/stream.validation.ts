@@ -48,3 +48,17 @@ export const streamValidation = {
   endStreamSchema,
   updateStreamSchema,
 };
+
+// Chat message validation
+export const chatValidation = {
+  sendMessage: z.object({
+    message: z
+      .string()
+      .min(1, "Message cannot be empty")
+      .max(500, "Message cannot exceed 500 characters"),
+  }),
+  getMessages: z.object({
+    page: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().max(100).optional(),
+  }),
+};

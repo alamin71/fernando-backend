@@ -4,6 +4,7 @@ import { User } from "../user/user.model";
 import AppError from "../../../errors/AppError";
 import httpStatus from "http-status";
 import crypto from "crypto";
+import { StreamChat } from "./streamChat.model";
 import {
   IvsClient,
   ListRecordingConfigurationsCommand,
@@ -574,4 +575,63 @@ export const streamService = {
   getStreamAnalytics,
   getRecordedStreams,
   getStreamRecording,
+};
+
+// ================= CHAT SERVICES =================
+export const streamChatService = {
+  async sendMessage(streamId: string, userId: string, message: string) {
+    // basic guard: stream must be live or recently ended
+    const stream = await Stream.findById(streamId).select(
+      "whoCanMessage status"
+    );
+    if (!stream) throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
+
+    // Optional: enforce followers-only messaging
+    // Skipped for MVP; can be added by checking User followers list
+
+    const doc = await StreamChat.create({
+      streamId,
+      userId,
+      message,
+      messageType: "TEXT",
+    });
+    return await StreamChat.findById(doc._id)
+      .populate("userId", "username image")
+      .lean();
+  },
+
+  async getMessages(streamId: string, page = 1, limit = 50) {
+    const skip = (page - 1) * limit;
+    const [items, total] = await Promise.all([
+      StreamChat.find({ streamId })
+        .populate("userId", "username image")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      StreamChat.countDocuments({ streamId }),
+    ]);
+
+    return { items, total, page, limit };
+  },
+
+  async deleteMessage(
+    streamId: string,
+    messageId: string,
+    requesterId: string
+  ) {
+    const stream = await Stream.findById(streamId).select("creatorId");
+    if (!stream) throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
+
+    // Only stream owner can delete for now
+    if (String(stream.creatorId) !== String(requesterId)) {
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        "Only owner can delete chat messages"
+      );
+    }
+
+    await StreamChat.deleteOne({ _id: messageId, streamId });
+    return { success: true };
+  },
 };

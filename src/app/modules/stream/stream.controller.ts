@@ -3,6 +3,7 @@ import httpStatus from "http-status";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { streamService } from "./stream.service";
+import { streamChatService } from "./stream.service";
 import config from "../../../config";
 import {
   uploadToS3,
@@ -358,4 +359,64 @@ export const streamControllers = {
   getStreamRecording,
   uploadRecording,
   getIngestConfig,
+};
+
+// ============== CHAT CONTROLLERS ==============
+const postChatMessage = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params; // streamId
+  const userId = req.user.id;
+  const { message } = req.body;
+
+  const result = await streamChatService.sendMessage(id, userId, message);
+
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Message sent",
+    data: result,
+  });
+});
+
+const getChatMessages = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params; // streamId
+  const page = Number(req.query.page) || 1;
+  const limit = Math.min(Number(req.query.limit) || 50, 100);
+
+  const result = await streamChatService.getMessages(id, page, limit);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Chat messages",
+    data: result.items,
+    meta: {
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPage: Math.ceil(result.total / result.limit || 1),
+    },
+  });
+});
+
+const deleteChatMessage = catchAsync(async (req: Request, res: Response) => {
+  const { id, messageId } = req.params; // streamId, messageId
+  const requesterId = req.user.id;
+  const result = await streamChatService.deleteMessage(
+    id,
+    messageId,
+    requesterId
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Message deleted",
+    data: result,
+  });
+});
+
+export const streamChatControllers = {
+  postChatMessage,
+  getChatMessages,
+  deleteChatMessage,
 };
