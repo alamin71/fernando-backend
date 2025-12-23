@@ -33,7 +33,6 @@ export const uploadToS3 = async (file: any, fileName: string) => {
       Key: uniqueFileName,
       Body: file.buffer,
       ContentType: file.mimetype,
-      ACL: "public-read",
     });
 
     await s3Client.send(command);
@@ -93,8 +92,7 @@ export const uploadManyToS3 = async (
         Bucket: config.aws.bucket,
         Key: fullKey,
         Body: file.buffer,
-        ContentType: file.mimetype, // Ensure Content-Type
-        ACL: "public-read", // Ensure public access
+        ContentType: file.mimetype,
       });
 
       await s3Client.send(command);
