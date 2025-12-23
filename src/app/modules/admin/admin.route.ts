@@ -30,7 +30,7 @@ router.get(
 router.patch(
   "/update-profile",
   adminAuth,
-  upload.single("file"),
+  upload.single("img"),
   adminControllers.updateProfile
 );
 router.patch("/change-password", adminAuth, adminControllers.changePassword);
