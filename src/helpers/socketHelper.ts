@@ -3,7 +3,6 @@ import { Server } from "socket.io";
 import { logger } from "../shared/logger";
 import { jwtHelper } from "./jwtHelper";
 import { StreamChat } from "../app/modules/stream/streamChat.model";
-import colors from "colors";
 
 const socket = (io: Server) => {
   io.on("connection", (socket) => {
