@@ -68,7 +68,8 @@ const startLive = async (
   }
 
   // Create stream
-  const streamKey = generateStreamKey();
+  // Use actual IVS stream key from config instead of generating random one
+  const streamKey = config.ivs.streamKey || generateStreamKey();
   const stream = await Stream.create({
     creatorId,
     title: payload.title,
