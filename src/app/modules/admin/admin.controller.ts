@@ -24,7 +24,12 @@ const adminLogin = catchAsync(async (req: Request, res: Response) => {
   if (!isMatch)
     throw new AppError(httpStatus.UNAUTHORIZED, "Incorrect password");
 
-  const payload = { id: admin._id, role: admin.role, email: admin.email };
+  const payload = {
+    id: admin._id,
+    role: admin.role,
+    email: admin.email,
+    fullName: admin.fullName,
+  };
 
   // Access token with 2h expiry
   const accessToken = jwt.sign(
@@ -45,6 +50,7 @@ const adminLogin = catchAsync(async (req: Request, res: Response) => {
         id: admin._id,
         email: admin.email,
         role: admin.role,
+        fullName: admin.fullName,
       },
       accessToken,
       refreshToken,
