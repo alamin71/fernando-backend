@@ -9,6 +9,12 @@ const seedAdmin = async () => {
   try {
     await Admin.deleteMany();
 
+    if (!config.super_admin.email || !config.super_admin.password) {
+      throw new Error(
+        "Missing SUPER_ADMIN_EMAIL or SUPER_ADMIN_PASSWORD in environment variables"
+      );
+    }
+
     const adminPayload = {
       email: config.super_admin.email,
       password: config.super_admin.password,

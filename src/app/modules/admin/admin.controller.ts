@@ -13,6 +13,7 @@ import { Stream } from "../stream/stream.model";
 import { StreamAnalytics } from "../stream/streamAnalytics.model";
 import { jwtHelper } from "../../../helpers/jwtHelper";
 import QueryBuilder from "../../builder/QueryBuilder";
+import { Types } from "mongoose";
 
 // -------------------- Admin Auth --------------------
 const adminLogin = catchAsync(async (req: Request, res: Response) => {
@@ -401,6 +402,58 @@ const deleteCreator = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Block a creator
+const blockCreator = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!Types.ObjectId.isValid(id)) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invalid creator id");
+  }
+
+  const creator = await User.findOneAndUpdate(
+    { _id: id, role: "creator" },
+    { isBlocked: true },
+    { new: true }
+  ).select("_id username channelName email isBlocked status");
+
+  if (!creator) {
+    throw new AppError(httpStatus.NOT_FOUND, "Creator not found");
+  }
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Creator blocked successfully",
+    data: creator,
+  });
+});
+
+// Unblock a creator
+const unblockCreator = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!Types.ObjectId.isValid(id)) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invalid creator id");
+  }
+
+  const creator = await User.findOneAndUpdate(
+    { _id: id, role: "creator" },
+    { isBlocked: false },
+    { new: true }
+  ).select("_id username channelName email isBlocked status");
+
+  if (!creator) {
+    throw new AppError(httpStatus.NOT_FOUND, "Creator not found");
+  }
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Creator unblocked successfully",
+    data: creator,
+  });
+});
+
 const exportCreators = catchAsync(async (req: Request, res: Response) => {
   const creators = await User.find({ role: "creator", isDeleted: false })
     .select("username channelName email createdAt creatorStats")
@@ -504,4 +557,6 @@ export const adminControllers = {
   exportCreators,
   getCreatorById,
   bulkDeleteCreators,
+  blockCreator,
+  unblockCreator,
 };

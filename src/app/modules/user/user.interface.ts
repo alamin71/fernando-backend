@@ -132,6 +132,7 @@ export type IUser = {
   description?: string;
   verified?: boolean;
   isDeleted?: boolean;
+  isBlocked?: boolean;
   status?: "PENDING" | "ACTIVE" | "REJECTED";
 
   profileData?: ProfileData;

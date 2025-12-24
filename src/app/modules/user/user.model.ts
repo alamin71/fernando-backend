@@ -43,6 +43,7 @@ const userSchema = new Schema<IUser, UserModel>(
     },
     verified: { type: Boolean, default: false, index: true },
     isDeleted: { type: Boolean, default: false, index: true },
+    isBlocked: { type: Boolean, default: false, index: true },
 
     // Profile data - minimal for all users
     profileData: {

@@ -38,4 +38,12 @@ router.post("/forgot-password", adminControllers.forgotPassword);
 router.post("/verify-otp", adminControllers.verifyOtp);
 router.post("/reset-password", adminControllers.resetPassword);
 
+// Block/Unblock creators
+router.patch("/creators/:id/block", adminAuth, adminControllers.blockCreator);
+router.patch(
+  "/creators/:id/unblock",
+  adminAuth,
+  adminControllers.unblockCreator
+);
+
 export const adminRoutes = router;
