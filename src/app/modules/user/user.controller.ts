@@ -87,7 +87,8 @@ const deleteProfile = catchAsync(async (req, res) => {
 
 // Update channel photos
 const updateChannelPhotos = catchAsync(async (req, res) => {
-  const { id } = req.params;
+  // Always use authenticated user ID to prevent updating others' channels
+  const id = (req.user as any)?.id;
   const updateData: any = {};
 
   if (req.files && typeof req.files === "object") {
