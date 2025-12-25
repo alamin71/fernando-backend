@@ -7,8 +7,6 @@ import { TAdminDoc, AdminModel } from "./admin.interface";
 const AdminSchema = new Schema<TAdminDoc>(
   {
     fullName: { type: String },
-    phoneNumber: { type: String },
-
     email: { type: String, required: true, unique: true },
     image: {
       id: String,

@@ -2,7 +2,6 @@ import { Document, Model } from "mongoose";
 
 export type TAdmin = {
   fullName?: string;
-  phoneNumber?: string;
   email: string;
   password: string;
   image?: {

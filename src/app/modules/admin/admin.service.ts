@@ -3,7 +3,7 @@ import AppError from "../../../errors/AppError";
 import httpStatus from "http-status";
 
 const updateAdminProfile = async (id: string, payload: Record<string, any>) => {
-  const allowedFields = ["fullName", "phoneNumber", "image"];
+  const allowedFields = ["fullName", "image"];
   const updateData: Record<string, any> = {};
 
   allowedFields.forEach((field) => {
