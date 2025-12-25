@@ -22,7 +22,7 @@ const routes = [
     route: adminRoutes,
   },
   {
-    path: "/categories",
+    path: "/admin",
     route: categoryRoutes,
   },
   {

@@ -18,20 +18,20 @@ router.post(
 
 // Bulk delete categories
 router.post(
-  "/bulk-delete",
+  "/categories/bulk-delete",
   adminAuth,
   categoryControllers.bulkDeleteCategories
 );
 
 // Get all categories
-router.get("/", categoryControllers.getAllCategories);
+router.get("/categories", categoryControllers.getAllCategories);
 
 // Get category by ID
-router.get("/:id", categoryControllers.getCategoryById);
+router.get("/categories/:id", categoryControllers.getCategoryById);
 
 // Update category
 router.patch(
-  "/update/:id",
+  "/categories/:id",
   adminAuth,
   upload.fields([
     { name: "image", maxCount: 1 },
@@ -41,6 +41,6 @@ router.patch(
 );
 
 // Delete category
-router.delete("/delete/:id", adminAuth, categoryControllers.deleteCategory);
+router.delete("/categories/:id", adminAuth, categoryControllers.deleteCategory);
 
 export const categoryRoutes = router;
