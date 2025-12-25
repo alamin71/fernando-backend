@@ -68,15 +68,16 @@ const startLive = async (
   }
 
   // Create stream
-  // Use actual IVS stream key from config instead of generating random one
-  const streamKey = config.ivs.streamKey || generateStreamKey();
+  // Database streamKey: random unique key for tracking (not used for actual streaming)
+  // IVS streamKey: from config (used in OBS)
+  const dbStreamKey = generateStreamKey();
   const stream = await Stream.create({
     creatorId,
     title: payload.title,
     description: payload.description || "",
     categoryId: payload.categoryId || null,
     thumbnail: payload.thumbnail || "",
-    streamKey,
+    streamKey: dbStreamKey,
     status: "LIVE",
     isPublic: payload.isPublic !== false,
     whoCanMessage: payload.whoCanMessage || "everyone",
@@ -87,18 +88,6 @@ const startLive = async (
     totalViews: 0,
     totalLikes: 0,
     totalComments: 0,
-  });
-
-  // Create analytics document
-  await StreamAnalytics.create({
-    streamId: stream._id,
-    viewCount: 0,
-    watchDuration: 0,
-    uniqueViewers: 0,
-    peakConcurrentViewers: 0,
-    likes: 0,
-    comments: 0,
-    shares: 0,
   });
 
   // Update creator stats
@@ -113,10 +102,11 @@ const startLive = async (
   // IVS playback URL for viewers
   const playbackUrl = config.ivs.playbackUrl || "";
   const ingestEndpoint = config.ivs.ingestEndpoint || "";
+  const ivsStreamKey = config.ivs.streamKey || dbStreamKey;
 
   return {
     streamId: stream._id,
-    streamKey,
+    streamKey: ivsStreamKey,
     title: stream.title,
     description: stream.description,
     categoryId: stream.categoryId,
