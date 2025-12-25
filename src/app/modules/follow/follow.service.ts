@@ -61,21 +61,21 @@ const unfollowCreator = async (followerId: string, followingId: string) => {
   return { message: "Unfollowed successfully" };
 };
 
-// Get user's followers
+// Get creator's followers
 const getFollowers = async (
-  userId: string,
+  creatorId: string,
   filters: { page: number; limit: number }
 ) => {
   const { page, limit } = filters;
 
-  const followers = await Follow.find({ followingId: userId })
+  const followers = await Follow.find({ followingId: creatorId })
     .populate("followerId", "username channelName image")
     .skip((page - 1) * limit)
     .limit(limit)
     .sort({ createdAt: -1 })
     .lean();
 
-  const total = await Follow.countDocuments({ followingId: userId });
+  const total = await Follow.countDocuments({ followingId: creatorId });
 
   return {
     followers: followers.map((f: any) => f.followerId),
@@ -85,21 +85,21 @@ const getFollowers = async (
   };
 };
 
-// Get user's following
+// Get creator's following
 const getFollowing = async (
-  userId: string,
+  creatorId: string,
   filters: { page: number; limit: number }
 ) => {
   const { page, limit } = filters;
 
-  const following = await Follow.find({ followerId: userId })
+  const following = await Follow.find({ followerId: creatorId })
     .populate("followingId", "username channelName image")
     .skip((page - 1) * limit)
     .limit(limit)
     .sort({ createdAt: -1 })
     .lean();
 
-  const total = await Follow.countDocuments({ followerId: userId });
+  const total = await Follow.countDocuments({ followerId: creatorId });
 
   return {
     following: following.map((f: any) => f.followingId),

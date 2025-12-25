@@ -33,13 +33,13 @@ const unfollowCreator = catchAsync(async (req, res) => {
   });
 });
 
-// Get user's followers
+// Get creator's followers
 const getFollowers = catchAsync(async (req, res) => {
-  const { userId } = req.params;
+  const { creatorId } = req.params;
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 20;
 
-  const result = await followService.getFollowers(userId, { page, limit });
+  const result = await followService.getFollowers(creatorId, { page, limit });
 
   sendResponse(res, {
     success: true,
@@ -55,13 +55,13 @@ const getFollowers = catchAsync(async (req, res) => {
   });
 });
 
-// Get user's following
+// Get creator's following
 const getFollowing = catchAsync(async (req, res) => {
-  const { userId } = req.params;
+  const { creatorId } = req.params;
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 20;
 
-  const result = await followService.getFollowing(userId, { page, limit });
+  const result = await followService.getFollowing(creatorId, { page, limit });
 
   sendResponse(res, {
     success: true,
@@ -98,4 +98,55 @@ export const followController = {
   getFollowers,
   getFollowing,
   checkFollowStatus,
+};
+
+// Get current user's followers
+const getMyFollowers = catchAsync(async (req, res) => {
+  const creatorId = (req.user as any)?.id;
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 20;
+
+  const result = await followService.getFollowers(creatorId, { page, limit });
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Followers retrieved successfully",
+    data: result.followers,
+    meta: {
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPage: Math.ceil(result.total / result.limit),
+    },
+  });
+});
+
+// Get current user's following
+const getMyFollowing = catchAsync(async (req, res) => {
+  const creatorId = (req.user as any)?.id;
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 20;
+
+  const result = await followService.getFollowing(creatorId, { page, limit });
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Following retrieved successfully",
+    data: result.following,
+    meta: {
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPage: Math.ceil(result.total / result.limit),
+    },
+  });
+});
+
+// Re-export with new handlers
+export const extendedFollowController = {
+  ...followController,
+  getMyFollowers,
+  getMyFollowing,
 };

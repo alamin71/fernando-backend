@@ -1,7 +1,10 @@
 import express from "express";
 import { USER_ROLES } from "../../../enums/user";
 import auth from "../../middleware/auth";
-import { followController } from "./follow.controller";
+import {
+  followController,
+  extendedFollowController,
+} from "./follow.controller";
 
 const router = express.Router();
 
@@ -23,8 +26,20 @@ router.delete(
 /**
  * Get followers/following lists (public)
  */
-router.get("/:userId/followers", followController.getFollowers);
-router.get("/:userId/following", followController.getFollowing);
+router.get("/:creatorId/followers", followController.getFollowers);
+router.get("/:creatorId/following", followController.getFollowing);
+
+// Convenience: get current creator's followers/following
+router.get(
+  "/me/followers",
+  auth(USER_ROLES.CREATOR, USER_ROLES.ADMIN),
+  extendedFollowController.getMyFollowers
+);
+router.get(
+  "/me/following",
+  auth(USER_ROLES.CREATOR, USER_ROLES.ADMIN),
+  extendedFollowController.getMyFollowing
+);
 
 /**
  * Check if authenticated user follows a creator
