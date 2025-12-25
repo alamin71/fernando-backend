@@ -5,6 +5,7 @@ import { adminRoutes } from "../app/modules/admin/admin.route";
 import { categoryRoutes } from "../app/modules/category/category.route";
 import { settingsRoutes } from "../app/modules/settings/settings.route";
 import { streamRoutes } from "../app/modules/stream/stream.route";
+import { followRoutes } from "../app/modules/follow/follow.route";
 
 const router = express.Router();
 const routes = [
@@ -31,6 +32,10 @@ const routes = [
   {
     path: "/streams",
     route: streamRoutes,
+  },
+  {
+    path: "/follow",
+    route: followRoutes,
   },
 ];
 
