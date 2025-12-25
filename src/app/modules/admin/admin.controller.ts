@@ -368,6 +368,8 @@ const getAllCreators = catchAsync(async (req: Request, res: Response) => {
     followers: creator.creatorStats?.totalFollowers || 0,
     views: creator.creatorStats?.totalStreamViews || 0,
     likes: creator.creatorStats?.totalLikes || 0,
+    isBlocked: creator.isBlocked || false,
+    status: creator.status || "ACTIVE",
   }));
 
   sendResponse(res, {
@@ -539,6 +541,22 @@ const bulkDeleteCreators = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deleteStream = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const { deleteStream: deleteStreamService } = await import(
+    "../stream/stream.service"
+  );
+  const result = await deleteStreamService(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: result.message,
+    data: null,
+  });
+});
+
 export const adminControllers = {
   adminLogin,
   updateProfile,
@@ -559,4 +577,5 @@ export const adminControllers = {
   bulkDeleteCreators,
   blockCreator,
   unblockCreator,
+  deleteStream,
 };

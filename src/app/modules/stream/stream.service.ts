@@ -687,3 +687,28 @@ export const streamChatService = {
     return { success: true };
   },
 };
+
+// Delete stream (Admin only)
+const deleteStream = async (streamId: string) => {
+  const stream = await Stream.findById(streamId);
+
+  if (!stream) {
+    throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
+  }
+
+  // Delete associated data
+  await Promise.all([
+    StreamChat.deleteMany({ streamId }),
+    StreamAnalytics.deleteOne({ streamId }),
+    Stream.findByIdAndDelete(streamId),
+  ]);
+
+  // Update creator stats
+  await User.findByIdAndUpdate(stream.creatorId, {
+    $inc: { "creatorStats.totalStreams": -1 },
+  });
+
+  return { message: "Stream deleted successfully" };
+};
+
+export { deleteStream };

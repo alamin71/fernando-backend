@@ -420,3 +420,22 @@ export const streamChatControllers = {
   getChatMessages,
   deleteChatMessage,
 };
+
+// Delete stream (Admin only)
+const deleteStream = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const { deleteStream: deleteStreamService } = await import(
+    "./stream.service"
+  );
+  const result = await deleteStreamService(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: result.message,
+    data: null,
+  });
+});
+
+export { deleteStream };

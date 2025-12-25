@@ -26,6 +26,7 @@ router.get(
   adminAuth,
   adminControllers.getStreamAnalytics
 );
+router.delete("/streams/:id", adminAuth, adminControllers.deleteStream);
 
 router.patch(
   "/update-profile",
