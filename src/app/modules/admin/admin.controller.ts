@@ -346,7 +346,7 @@ const getStreamAnalytics = catchAsync(async (req: Request, res: Response) => {
 const getAllCreators = catchAsync(async (req: Request, res: Response) => {
   const queryBuilder = new QueryBuilder<any>(
     User.find({ role: "creator" }).select(
-      "username channelName email image createdAt creatorStats"
+      "username channelName email image createdAt creatorStats isBlocked status"
     ),
     req.query
   )
