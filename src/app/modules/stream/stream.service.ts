@@ -325,7 +325,7 @@ const updateStream = async (
   return updatedStream;
 };
 
-// Increment view count
+// Increment view count and return enriched stream details (similar to getStreamById)
 const incrementViewCount = async (streamId: string, userId?: string) => {
   const stream = await Stream.findById(streamId);
 
@@ -338,7 +338,7 @@ const incrementViewCount = async (streamId: string, userId?: string) => {
   }
 
   // Update stream stats
-  const updatedStream = await Stream.findByIdAndUpdate(
+  await Stream.findByIdAndUpdate(
     streamId,
     {
       $inc: { totalViews: 1, currentViewers: 1 },
@@ -359,13 +359,20 @@ const incrementViewCount = async (streamId: string, userId?: string) => {
     { upsert: true }
   );
 
+  // Re-fetch enriched stream details for response (same shape as getStreamById)
+  const populatedStream = await Stream.findById(streamId)
+    .populate("creatorId", "username channelName image creatorStats")
+    .populate("categoryId", "name");
+
+  const analytics = await StreamAnalytics.findOne({ streamId });
+
   return {
-    currentViewers: updatedStream?.currentViewers || 0,
-    totalViews: updatedStream?.totalViews || 0,
+    stream: populatedStream,
+    analytics,
   };
 };
 
-// Decrement viewer count (when viewer leaves)
+// Decrement viewer count (when viewer leaves) and return enriched payload
 const decrementViewCount = async (streamId: string) => {
   const stream = await Stream.findById(streamId);
 
@@ -373,12 +380,23 @@ const decrementViewCount = async (streamId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
   }
 
+  // Drop viewer count but never below zero
   await Stream.findByIdAndUpdate(streamId, {
     $inc: { currentViewers: -1 },
-    $max: { currentViewers: 0 }, // Prevent negative values
+    $max: { currentViewers: 0 },
   });
 
-  return { success: true };
+  // Return same enriched shape as join/getStreamById
+  const populatedStream = await Stream.findById(streamId)
+    .populate("creatorId", "username channelName image creatorStats")
+    .populate("categoryId", "name");
+
+  const analytics = await StreamAnalytics.findOne({ streamId });
+
+  return {
+    stream: populatedStream,
+    analytics,
+  };
 };
 
 // Toggle like on stream
