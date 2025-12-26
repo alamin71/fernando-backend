@@ -231,6 +231,21 @@ const getPlatformStats = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getGrowthOverview = catchAsync(async (req: Request, res: Response) => {
+  // Optional month/year filters (1-12, e.g., month=12&year=2025)
+  const monthParam = Number(req.query.month);
+  const yearParam = Number(req.query.year);
+  const hasMonthFilter =
+    Number.isFinite(monthParam) &&
+    Number.isFinite(yearParam) &&
+    monthParam >= 1 &&
+    monthParam <= 12 &&
+    yearParam >= 1970;
+
+  const monthStart = hasMonthFilter
+    ? new Date(yearParam, monthParam - 1, 1)
+    : null;
+  const monthEnd = hasMonthFilter ? new Date(yearParam, monthParam, 1) : null;
+
   // Last 12 months (month-wise) for creators
   const monthlyStart = new Date();
   monthlyStart.setMonth(monthlyStart.getMonth() - 11); // include current month and previous 11
@@ -247,6 +262,35 @@ const getGrowthOverview = catchAsync(async (req: Request, res: Response) => {
   const lastMonthStart = new Date(currentMonthStart);
   lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
 
+  // If month/year provided, override ranges to that month
+  const creatorsRangeMatch = hasMonthFilter
+    ? {
+        $match: {
+          role: "creator",
+          createdAt: { $gte: monthStart, $lt: monthEnd },
+        },
+      }
+    : { $match: { role: "creator", createdAt: { $gte: monthlyStart } } };
+
+  const liveStreamsRangeMatch = hasMonthFilter
+    ? {
+        $match: {
+          status: "LIVE",
+          startedAt: { $gte: monthStart, $lt: monthEnd },
+        },
+      }
+    : { $match: { status: "LIVE", startedAt: { $gte: dailyStart } } };
+
+  // Adjust "last month" window relative to provided month/year if present
+  const computedCurrentMonthStart = hasMonthFilter
+    ? new Date(yearParam, monthParam - 1, 1)
+    : currentMonthStart;
+  const computedLastMonthStart = new Date(computedCurrentMonthStart);
+  computedLastMonthStart.setMonth(computedLastMonthStart.getMonth() - 1);
+  const computedMonthEnd = hasMonthFilter
+    ? new Date(yearParam, monthParam, 1)
+    : new Date(computedCurrentMonthStart.getTime() + 31 * 24 * 60 * 60 * 1000); // rough, not critical
+
   const [
     monthlyCreators,
     liveStreams,
@@ -257,7 +301,7 @@ const getGrowthOverview = catchAsync(async (req: Request, res: Response) => {
   ] = await Promise.all([
     // Month-wise creator signup counts
     User.aggregate([
-      { $match: { role: "creator", createdAt: { $gte: monthlyStart } } },
+      creatorsRangeMatch,
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
@@ -268,7 +312,7 @@ const getGrowthOverview = catchAsync(async (req: Request, res: Response) => {
     ]),
     // Day-wise live streams (last 30 days)
     Stream.aggregate([
-      { $match: { status: "LIVE", startedAt: { $gte: dailyStart } } },
+      liveStreamsRangeMatch,
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$startedAt" } },
@@ -284,11 +328,17 @@ const getGrowthOverview = catchAsync(async (req: Request, res: Response) => {
     // New creators last month (previous calendar month)
     User.countDocuments({
       role: "creator",
-      createdAt: { $gte: lastMonthStart, $lt: currentMonthStart },
+      createdAt: {
+        $gte: computedLastMonthStart,
+        $lt: computedCurrentMonthStart,
+      },
     }),
     // Streams started last month (any status)
     Stream.countDocuments({
-      startedAt: { $gte: lastMonthStart, $lt: currentMonthStart },
+      startedAt: {
+        $gte: computedLastMonthStart,
+        $lt: computedCurrentMonthStart,
+      },
     }),
   ]);
 
