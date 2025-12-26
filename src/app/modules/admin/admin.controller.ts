@@ -231,37 +231,83 @@ const getPlatformStats = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getGrowthOverview = catchAsync(async (req: Request, res: Response) => {
-  const days = 30;
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
+  // Last 12 months (month-wise) for creators
+  const monthlyStart = new Date();
+  monthlyStart.setMonth(monthlyStart.getMonth() - 11); // include current month and previous 11
+  monthlyStart.setDate(1);
 
-  const creators = await User.aggregate([
-    { $match: { role: "creator", createdAt: { $gte: startDate } } },
-    {
-      $group: {
-        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-        count: { $sum: 1 },
+  // Last 30 days for live streams (day-wise)
+  const dailyStart = new Date();
+  dailyStart.setDate(dailyStart.getDate() - 30);
+
+  // Last month window (previous calendar month)
+  const currentMonthStart = new Date();
+  currentMonthStart.setDate(1);
+  currentMonthStart.setHours(0, 0, 0, 0);
+  const lastMonthStart = new Date(currentMonthStart);
+  lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
+
+  const [
+    monthlyCreators,
+    liveStreams,
+    totalCreators,
+    totalLiveStreamers,
+    newCreatorsLastMonth,
+    liveStreamsLastMonth,
+  ] = await Promise.all([
+    // Month-wise creator signup counts
+    User.aggregate([
+      { $match: { role: "creator", createdAt: { $gte: monthlyStart } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+          count: { $sum: 1 },
+        },
       },
-    },
-    { $sort: { _id: 1 } },
+      { $sort: { _id: 1 } },
+    ]),
+    // Day-wise live streams (last 30 days)
+    Stream.aggregate([
+      { $match: { status: "LIVE", startedAt: { $gte: dailyStart } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$startedAt" } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]),
+    // Total creators (all-time)
+    User.countDocuments({ role: "creator" }),
+    // Total live streamers right now (distinct creators who are live)
+    Stream.distinct("creatorId", { status: "LIVE" }),
+    // New creators last month (previous calendar month)
+    User.countDocuments({
+      role: "creator",
+      createdAt: { $gte: lastMonthStart, $lt: currentMonthStart },
+    }),
+    // Streams started last month (any status)
+    Stream.countDocuments({
+      startedAt: { $gte: lastMonthStart, $lt: currentMonthStart },
+    }),
   ]);
 
-  const liveStreams = await Stream.aggregate([
-    { $match: { status: "LIVE", startedAt: { $gte: startDate } } },
-    {
-      $group: {
-        _id: { $dateToString: { format: "%Y-%m-%d", date: "$startedAt" } },
-        count: { $sum: 1 },
-      },
-    },
-    { $sort: { _id: 1 } },
-  ]);
+  const totalLiveStreamerCount = Array.isArray(totalLiveStreamers)
+    ? totalLiveStreamers.length
+    : 0;
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: "Growth overview data fetched successfully",
-    data: { creators, liveStreams },
+    data: {
+      totalCreators,
+      totalLiveStreamers: totalLiveStreamerCount,
+      newCreatorsLastMonth,
+      liveStreamsLastMonth,
+      monthlyCreators,
+      liveStreams,
+    },
   });
 });
 
