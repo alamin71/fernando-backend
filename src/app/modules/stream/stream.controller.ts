@@ -222,6 +222,25 @@ const toggleLike = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Get user's liked streams
+const getLikedStreams = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const { page = 1, limit = 10 } = req.query;
+
+  const result = await streamService.getLikedStreams(
+    userId,
+    Number(page),
+    Number(limit)
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Liked streams retrieved successfully",
+    data: result,
+  });
+});
+
 // Get stream analytics
 const getStreamAnalytics = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -354,6 +373,7 @@ export const streamControllers = {
   incrementViewCount,
   decrementViewCount,
   toggleLike,
+  getLikedStreams,
   getStreamAnalytics,
   getRecordedStreams,
   getStreamRecording,

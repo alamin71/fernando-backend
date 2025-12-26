@@ -426,6 +426,46 @@ const toggleLike = async (streamId: string, userId: string) => {
   }
 };
 
+// Get user's liked streams
+const getLikedStreams = async (
+  userId: string,
+  page: number = 1,
+  limit: number = 10
+) => {
+  const skip = (page - 1) * limit;
+
+  // Get user and their liked streams
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  const likedStreamIds = user.likedStreams || [];
+
+  // Get total count
+  const total = likedStreamIds.length;
+
+  // Get paginated liked streams
+  const streams = await Stream.find({
+    _id: { $in: likedStreamIds },
+  })
+    .populate("creatorId", "name email profilePhoto")
+    .populate("categoryId", "name")
+    .skip(skip)
+    .limit(limit)
+    .sort({ createdAt: -1 });
+
+  return {
+    streams,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
 // Get stream analytics
 const getStreamAnalytics = async (streamId: string, creatorId: string) => {
   const stream = await Stream.findById(streamId);
@@ -624,6 +664,7 @@ export const streamService = {
   incrementViewCount,
   decrementViewCount,
   toggleLike,
+  getLikedStreams,
   getStreamAnalytics,
   getRecordedStreams,
   getStreamRecording,

@@ -132,6 +132,15 @@ router.get("/recordings", streamControllers.getRecordedStreams);
  */
 router.get("/my-streams", auth("creator"), streamControllers.getCreatorStreams);
 
+/**
+ * ❤️ GET MY LIKED STREAMS (Viewer's Liked Streams)
+ * GET /api/v1/streams/my-liked
+ * Purpose: User নিজের liked streams দেখবে
+ * Auth: Required (any authenticated user)
+ * Query: page, limit
+ */
+router.get("/my-liked", auth(), streamControllers.getLikedStreams);
+
 // ==================== VIEWER INTERACTIONS ====================
 
 /**
