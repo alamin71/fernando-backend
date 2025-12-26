@@ -71,6 +71,12 @@ const startLive = async (
   // Database streamKey: random unique key for tracking (not used for actual streaming)
   // IVS streamKey: from config (used in OBS)
   const dbStreamKey = generateStreamKey();
+
+  // Get IVS config
+  const playbackUrl = config.ivs.playbackUrl || "";
+  const ingestEndpoint = config.ivs.ingestEndpoint || "";
+  const ivsStreamKey = config.ivs.streamKey || dbStreamKey;
+
   const stream = await Stream.create({
     creatorId,
     title: payload.title,
@@ -88,6 +94,7 @@ const startLive = async (
     totalViews: 0,
     totalLikes: 0,
     totalComments: 0,
+    playbackUrl: playbackUrl, // Save playback URL to database
   });
 
   // Update creator stats
@@ -98,11 +105,6 @@ const startLive = async (
     },
     { new: true }
   );
-
-  // IVS playback URL for viewers
-  const playbackUrl = config.ivs.playbackUrl || "";
-  const ingestEndpoint = config.ivs.ingestEndpoint || "";
-  const ivsStreamKey = config.ivs.streamKey || dbStreamKey;
 
   return {
     streamId: stream._id,
