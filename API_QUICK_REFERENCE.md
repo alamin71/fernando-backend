@@ -1,6 +1,6 @@
 # 🎯 Stream API Quick Reference
 
-**Version:** 1.0.0 | **Last Updated:** December 16, 2025 | **Status:** ✅ Production Ready
+**Version:** 1.0.0 | **Last Updated:** December 28, 2025 | **Status:** ✅ Production Ready
 
 ## Base URL
 
@@ -19,6 +19,7 @@ http://localhost:5000/api/v1/streams
 | POST   | `/go-live`       | Stream শুরু করা | Creator |
 | PATCH  | `/:id/stop-live` | Stream বন্ধ করা | Creator |
 | PATCH  | `/:id/settings`  | Settings update | Creator |
+| GET    | `/ingest-config` | Ingest config   | Creator |
 
 ### 🔍 DISCOVER STREAMS (Browse/Search)
 
@@ -27,14 +28,19 @@ http://localhost:5000/api/v1/streams
 | GET    | `/currently-live` | Live streams list | Public  |
 | GET    | `/recordings`     | Recorded streams  | Public  |
 | GET    | `/my-streams`     | My streams        | Creator |
+| GET    | `/my-liked`       | Liked streams     | Auth    |
 
 ### 👤 VIEWER ACTIONS (Watch/Interact)
 
-| Method | Endpoint     | Purpose      | Auth     |
-| ------ | ------------ | ------------ | -------- |
-| POST   | `/:id/join`  | Join stream  | Optional |
-| DELETE | `/:id/leave` | Leave stream | Public   |
-| POST   | `/:id/like`  | Like/unlike  | Creator  |
+| Method | Endpoint               | Purpose      | Auth     |
+| ------ | ---------------------- | ------------ | -------- |
+| POST   | `/:id/join`            | Join stream  | Optional |
+| DELETE | `/:id/leave`           | Leave stream | Public   |
+| POST   | `/:id/like`            | Like/unlike  | Creator  |
+| GET    | `/:id/watch`           | Watch VOD    | Public   |
+| GET    | `/:id/chat`            | List chat    | Public   |
+| POST   | `/:id/chat`            | Send chat    | Auth     |
+| DELETE | `/:id/chat/:messageId` | Delete chat  | Creator  |
 
 ### 📊 ANALYTICS & DATA
 

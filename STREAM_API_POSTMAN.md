@@ -1,6 +1,6 @@
 # Stream API Documentation - Postman Collection
 
-**Version:** 1.0.0 | **Last Updated:** December 16, 2025 | **Status:** ✅ Production Ready
+**Version:** 1.0.0 | **Last Updated:** December 28, 2025 | **Status:** ✅ Production Ready
 
 ---
 
@@ -21,6 +21,8 @@
 ```
 http://localhost:5000/api/v1/streams
 ```
+
+> Changes: added `/ingest-config`, `/my-liked`, chat routes (`/:id/chat`), and VOD watch route `/:id/watch` to match current router.
 
 ## Authentication
 

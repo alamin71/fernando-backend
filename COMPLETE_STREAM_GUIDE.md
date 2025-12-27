@@ -1,7 +1,9 @@
 # 📺 Complete Stream Platform - Full Documentation
 
-**Last Updated:** December 16, 2025  
+**Last Updated:** December 28, 2025  
 **Version:** 1.0.0
+
+> What changed: Added ingest-config endpoint, liked streams endpoint, chat endpoints, VOD watch route, and clarified auth scopes to match current router.
 
 ---
 
