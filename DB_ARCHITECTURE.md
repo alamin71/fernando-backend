@@ -56,6 +56,11 @@
 │ResetToken   │◄──────────── User (password reset)
 │ (expiring)  │
 └─────────────┘
+
+┌─────────────┐
+│PageSettings │ (standalone - privacy/terms)
+│ (singleton) │
+└─────────────┘
 ```
 
 ---
@@ -119,6 +124,12 @@ followers: [ObjectId]           // Users following this creator
 following: [ObjectId]           // Creators this user follows
 likedStreams: [ObjectId]        // Streams user has liked
 ```
+
+**Stream Key (For Broadcasting):**
+| Field | Type | Notes |
+|-------|------|-------|
+| `streamKey` | String | Sparse, `select: false` |
+| `streamKeyUpdatedAt` | Date | Sparse, tracks last update |
 
 **Authentication (Nested):**
 
@@ -190,7 +201,7 @@ streamUrl: String            // RTMP ingest URL
 **Report Tracking:**
 
 ```
-isReported: Boolean          // Content moderation flag
+isReported: Boolean (indexed)  // Content moderation flag
 ```
 
 **Compound Indexes:**
@@ -222,7 +233,7 @@ isReported: Boolean          // Content moderation flag
 |-------|------|---------|-------|
 | `_id` | ObjectId | ✓ | Auto-generated |
 | `name` | String | ✓ (Unique) | Category name |
-| `image` | String | | Category icon URL |
+| `image` | String | ✓ | Category icon URL (required) |
 | `coverPhoto` | String | | Category banner URL |
 | `isActive` | Boolean | ✓ | Display flag |
 
@@ -416,6 +427,22 @@ isExpireToken(token); // Check if valid (not expired)
 
 ---
 
+### 10. **PageSettings** (PageSettings)
+
+**Purpose:** Application-wide settings (privacy policy, terms)
+
+**Fields:**
+| Field | Type | Notes |
+|-------|------|-------|
+| `_id` | ObjectId | Auto-generated |
+| `privacyPolicy` | String | Privacy policy content |
+| `termsAndConditions` | String | Terms and conditions |
+| `lastUpdated` | Date | Last update timestamp |
+
+**Timestamps:** `createdAt`, `updatedAt`
+
+---
+
 ## 🔗 Relationship Summary
 
 | From                | To                    | Type       | Cardinality | Notes                    |
@@ -432,6 +459,7 @@ isExpireToken(token); // Check if valid (not expired)
 | **User (as array)** | Follow                | References | 1:Many      | followers[], following[] |
 | **Admin**           | -                     | Standalone | -           | No relationships         |
 | **ResetToken**      | User                  | References | Many:1      | Token → user             |
+| **PageSettings**    | -                     | Standalone | -           | No relationships         |
 
 ---
 
@@ -499,6 +527,7 @@ isExpireToken(token); // Check if valid (not expired)
 |                     | (categoryId, status)                 | Category browse            | Medium      |
 |                     | (createdAt DESC)                     | Latest streams             | High        |
 |                     | (totalViews DESC)                    | Trending                   | High        |
+|                     | isReported                           | Content moderation         | Low         |
 |                     | (endedAt) **TTL**                    | Auto-delete (90d)          | Medium      |
 | **Follow**          | (followerId, followingId) **unique** | Prevent duplicates         | High        |
 |                     | followerId                           | Get following list         | High        |
@@ -518,6 +547,7 @@ isExpireToken(token); // Check if valid (not expired)
 | `User.following[]`      | Embedded Array | Denormalized for fast access              |
 | `User.likedStreams[]`   | Embedded Array | Denormalized for query speed              |
 | `User.socialAccounts[]` | Embedded Array | Platform links                            |
+| `User.streamKey`        | Sparse Index   | `select: false` for security              |
 
 ---
 
@@ -576,6 +606,7 @@ totalComments: Number        // Count from StreamChat collection
 | **StreamLike**      | Large        | +10K-50K/day  | 1M+          |
 | **Admin**           | Tiny         | Static        | 1-10         |
 | **ResetToken**      | Small        | Temporary     | 100-1K       |
+| **PageSettings**    | Tiny         | Static        | 1            |
 
 ---
 
