@@ -6,8 +6,22 @@ import { categoryRoutes } from "../app/modules/category/category.route";
 import { settingsRoutes } from "../app/modules/settings/settings.route";
 import { streamRoutes } from "../app/modules/stream/stream.route";
 import { followRoutes } from "../app/modules/follow/follow.route";
+import mongoose from "mongoose";
 
 const router = express.Router();
+
+// Health check endpoint
+router.get("/health", (req, res) => {
+  const healthCheck = {
+    status: "UP",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    database:
+      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+    environment: process.env.NODE_ENV || "development",
+  };
+  res.status(200).json(healthCheck);
+});
 const routes = [
   {
     path: "/auth",

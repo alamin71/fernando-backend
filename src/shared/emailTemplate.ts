@@ -6,13 +6,16 @@ import {
   IResetPasswordByEmail,
 } from "../types/emailTemplate";
 
+const LOGO_URL =
+  "https://fernando-buckets.s3.us-east-1.amazonaws.com/logo/logo.png";
+
 const createAccount = (values: ICreateAccount) => {
   const data = {
     to: values.email,
     subject: "Verify your account",
     html: `<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 50px; padding: 20px; color: #555;">
     <div style="width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); text-align: center;">
-        <img src="https://i.postimg.cc/6pgNvKhD/logo.png" alt="Logo" style="display: block; margin: 0 auto 20px; width:150px" />
+        <img src="${LOGO_URL}" alt="Morningwood Logo" style="display: block; margin: 0 auto 20px; width:150px" />
           <h2 style="color: #277E16; font-size: 24px; margin-bottom: 20px;">Hey! ${values.name}, Your Account Credentials</h2>
         <div style="text-align: center;">
             <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 20px;">Your single use code is:</p>
@@ -24,13 +27,14 @@ const createAccount = (values: ICreateAccount) => {
   };
   return data;
 };
+
 const contact = (values: IContact) => {
   const data = {
     to: values.email,
-    subject: "We’ve Received Your Message – Thank You!",
+    subject: "We've Received Your Message – Thank You!",
     html: `<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 50px; padding: 20px; color: #555;">      
       <div style="width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-          <img src="https://res.cloudinary.com/ddhhyc6mr/image/upload/v1742293522/buzzy-box-logo.png" alt="Logo" style="display: block; margin: 0 auto 20px; width:150px" />
+          <img src="${LOGO_URL}" alt="Morningwood Logo" style="display: block; margin: 0 auto 20px; width:150px" />
           <h2 style="color: #277E16; font-size: 24px; margin-bottom: 20px; text-align: center;">Thank You for Contacting Us, ${values.name}!</h2>
           
           <p style="color: #555; font-size: 16px; line-height: 1.5; text-align: center;">
@@ -48,25 +52,26 @@ const contact = (values: IContact) => {
 
           <p style="color: #555; font-size: 14px; text-align: center;">
               If your inquiry is urgent, feel free to reach out to us directly at 
-              <a href="mailto:support@yourdomain.com" style="color: #277E16; text-decoration: none;">support@yourdomain.com</a>.
+              <a href="mailto:support@morningwood.com" style="color: #277E16; text-decoration: none;">support@morningwood.com</a>.
           </p>
 
           <p style="color: #555; font-size: 14px; text-align: center; margin-top: 20px;">
               Best Regards, <br/>
-              The [Your Company Name] Team
+              The Morningwood Team
           </p>
       </div>
   </body>`,
   };
   return data;
 };
+
 const resetPassword = (values: IResetPassword) => {
   const data = {
     to: values.email,
     subject: "Reset your password",
     html: `<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 50px; padding: 20px; color: #555;">
     <div style="width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-        <img src="https://i.postimg.cc/6pgNvKhD/logo.png" alt="Logo" style="display: block; margin: 0 auto 20px; width:150px" />
+        <img src="${LOGO_URL}" alt="Morningwood Logo" style="display: block; margin: 0 auto 20px; width:150px" />
         <div style="text-align: center;">
             <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 20px;">Your single use code is:</p>
             <div style="background-color: #277E16; width: 120px; padding: 10px; text-align: center; border-radius: 8px; color: #fff; font-size: 25px; letter-spacing: 2px; margin: 20px auto;">${values.otp}</div>
@@ -78,18 +83,19 @@ const resetPassword = (values: IResetPassword) => {
   };
   return data;
 };
+
 const resetPasswordByUrl = (values: IResetPasswordByEmail) => {
   const data = {
     to: values.email,
     subject: "Reset Your Password",
     html: `<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 50px; padding: 20px; color: #555;">
       <div style="width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-        <img src="https://i.postimg.cc/6pgNvKhD/logo.png" alt="Logo" style="display: block; margin: 0 auto 20px; width:150px" />
+        <img src="${LOGO_URL}" alt="Morningwood Logo" style="display: block; margin: 0 auto 20px; width:150px" />
         <div style="text-align: center;">
           <h2 style="color: #333;">Reset Your Password</h2>
           <p style="color: #555; font-size: 16px; line-height: 1.5;">We received a request to reset your password. Click the button below to reset it:</p>
           <a href="${values.resetUrl}" target="_blank" style="display: inline-block; background-color: #277E16; color: white; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-size: 18px; margin: 20px auto;">Reset Password</a>
-          <p style="color: #555; font-size: 16px; line-height: 1.5; margin-top: 20px;">If you didn’t request this, you can ignore this email.</p>
+          <p style="color: #555; font-size: 16px; line-height: 1.5; margin-top: 20px;">If you didn't request this, you can ignore this email.</p>
           <p style="color: #b9b4b4; font-size: 14px;">This link will expire in 10 minutes.</p>
         </div>
       </div>
@@ -104,7 +110,7 @@ const contactFormTemplate = (values: IHelpContact) => {
     subject: "Thank you for reaching out to us",
     html: `<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 50px; padding: 20px; color: #555;">
     <div style="width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-        <img src="https://i.postimg.cc/6pgNvKhD/logo.png" alt="Logo" style="display: block; margin: 0 auto 20px; width:150px" />
+        <img src="${LOGO_URL}" alt="Morningwood Logo" style="display: block; margin: 0 auto 20px; width:150px" />
         <div style="text-align: center;">
             <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 20px;">Hello ${values.name},</p>
             <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 20px;">Thank you for reaching out to us. We have received your message:</p>
