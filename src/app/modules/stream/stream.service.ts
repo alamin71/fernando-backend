@@ -46,7 +46,7 @@ const startLive = async (
     isPublic?: boolean;
     whoCanMessage?: "everyone" | "followers";
     isMature?: boolean;
-  }
+  },
 ) => {
   // Verify creator exists and is active
   const creator = await User.findById(creatorId);
@@ -63,7 +63,7 @@ const startLive = async (
   if (existingLiveStream) {
     throw new AppError(
       httpStatus.CONFLICT,
-      "You already have an active live stream"
+      "You already have an active live stream",
     );
   }
 
@@ -103,7 +103,7 @@ const startLive = async (
     {
       $inc: { "creatorStats.totalStreams": 1 },
     },
-    { new: true }
+    { new: true },
   );
 
   return {
@@ -136,7 +136,7 @@ const endLive = async (
     recordingUrl?: string;
     playbackUrl?: string;
     durationSeconds?: number;
-  }
+  },
 ) => {
   const stream = await Stream.findById(streamId);
 
@@ -161,8 +161,8 @@ const endLive = async (
 
   // Auto-detect recording path from S3 if not provided
   if (!payload?.recordingUrl && stream.startedAt) {
-    const channelId = config.ivs.channelArn?.split("/").pop() || "7E3z4cpBMqh0";
-    const accountId = "051997449055";
+    const channelId = config.ivs.channelArn?.split("/").pop() || "2DmwQzILLrtf";
+    const accountId = "504956988903";
     const startDate = new Date(stream.startedAt);
 
     // Try to find actual recording in S3 (with session folder)
@@ -183,7 +183,7 @@ const endLive = async (
     // Compute duration from start/ended timestamps if not provided
     updateData.durationSeconds = Math.max(
       0,
-      Math.floor((endedAt.getTime() - stream.startedAt.getTime()) / 1000)
+      Math.floor((endedAt.getTime() - stream.startedAt.getTime()) / 1000),
     );
   }
 
@@ -265,7 +265,7 @@ const getCreatorStreams = async (
     page: number;
     limit: number;
     status?: "LIVE" | "OFFLINE" | "SCHEDULED";
-  }
+  },
 ) => {
   const { page, limit, status } = filters;
 
@@ -305,7 +305,7 @@ const updateStream = async (
     isPublic: boolean;
     whoCanMessage: "everyone" | "followers";
     isMature: boolean;
-  }>
+  }>,
 ) => {
   const stream = await Stream.findById(streamId);
 
@@ -346,7 +346,7 @@ const incrementViewCount = async (streamId: string, userId?: string) => {
       $inc: { totalViews: 1, currentViewers: 1 },
       $max: { peakViewers: (stream.currentViewers || 0) + 1 },
     },
-    { new: true }
+    { new: true },
   );
 
   // Update analytics
@@ -358,7 +358,7 @@ const incrementViewCount = async (streamId: string, userId?: string) => {
         peakConcurrentViewers: (stream.currentViewers || 0) + 1,
       },
     },
-    { upsert: true }
+    { upsert: true },
   );
 
   // Re-fetch enriched stream details for response (same shape as getStreamById)
@@ -424,7 +424,7 @@ const toggleLike = async (streamId: string, userId: string) => {
     });
     await StreamAnalytics.findOneAndUpdate(
       { streamId },
-      { $inc: { likes: -1 }, $max: { likes: 0 } }
+      { $inc: { likes: -1 }, $max: { likes: 0 } },
     );
 
     return { liked: false, totalLikes: Math.max(0, stream.totalLikes - 1) };
@@ -439,7 +439,7 @@ const toggleLike = async (streamId: string, userId: string) => {
     await StreamAnalytics.findOneAndUpdate(
       { streamId },
       { $inc: { likes: 1 } },
-      { upsert: true }
+      { upsert: true },
     );
 
     return { liked: true, totalLikes: stream.totalLikes + 1 };
@@ -450,7 +450,7 @@ const toggleLike = async (streamId: string, userId: string) => {
 const getLikedStreams = async (
   userId: string,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
 ) => {
   const skip = (page - 1) * limit;
 
@@ -540,7 +540,7 @@ const generatePlaybackUrl = (recordingUrl: string): string => {
 const findRecordingPath = async (
   accountId: string,
   channelId: string,
-  startDate: Date
+  startDate: Date,
 ): Promise<string | null> => {
   try {
     const year = startDate.getFullYear();
@@ -562,7 +562,7 @@ const findRecordingPath = async (
 
     // Find master.m3u8 file
     const masterFile = response.Contents?.find((obj) =>
-      obj.Key?.endsWith("/media/hls/master.m3u8")
+      obj.Key?.endsWith("/media/hls/master.m3u8"),
     );
 
     if (masterFile?.Key) {
@@ -649,7 +649,7 @@ const getStreamRecording = async (streamId: string) => {
   if (!stream.recordingUrl) {
     throw new AppError(
       httpStatus.NOT_FOUND,
-      "Recording not available for this stream"
+      "Recording not available for this stream",
     );
   }
 
@@ -695,7 +695,7 @@ export const streamChatService = {
   async sendMessage(streamId: string, userId: string, message: string) {
     // basic guard: stream must be live or recently ended
     const stream = await Stream.findById(streamId).select(
-      "whoCanMessage status"
+      "whoCanMessage status",
     );
     if (!stream) throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
 
@@ -731,7 +731,7 @@ export const streamChatService = {
   async deleteMessage(
     streamId: string,
     messageId: string,
-    requesterId: string
+    requesterId: string,
   ) {
     const stream = await Stream.findById(streamId).select("creatorId");
     if (!stream) throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
@@ -740,7 +740,7 @@ export const streamChatService = {
     if (String(stream.creatorId) !== String(requesterId)) {
       throw new AppError(
         httpStatus.FORBIDDEN,
-        "Only owner can delete chat messages"
+        "Only owner can delete chat messages",
       );
     }
 
