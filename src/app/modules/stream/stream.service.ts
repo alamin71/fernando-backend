@@ -580,31 +580,47 @@ const findRecordingPath = async (
 ): Promise<string | null> => {
   try {
     const year = startDate.getFullYear();
-    const month = String(startDate.getMonth() + 1).padStart(2, "0");
-    const day = String(startDate.getDate()).padStart(2, "0");
+    // Non-padded format (S3 structure uses 1, not 01)
+    const month = String(startDate.getMonth() + 1);
+    const day = String(startDate.getDate());
     const hour = String(startDate.getHours()).padStart(2, "0");
     const minute = String(startDate.getMinutes()).padStart(2, "0");
 
-    const prefix = `ivs/v1/${accountId}/${channelId}/${year}/${month}/${day}/${hour}/${minute}/`;
+    // Try multiple paths - IVS might use different formats
+    const possiblePrefixes = [
+      `ivs/v1/${accountId}/${channelId}/${year}/${month}/${day}/${hour}/${minute}/`,
+      `ivs/v1/${accountId}/${channelId}/${year}/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}/${hour}/${minute}/`,
+    ];
+
     const bucket = config.aws.bucket || "fernando-buckets";
 
-    const command = new ListObjectsV2Command({
-      Bucket: bucket,
-      Prefix: prefix,
-      MaxKeys: 10,
-    });
+    for (const prefix of possiblePrefixes) {
+      try {
+        const command = new ListObjectsV2Command({
+          Bucket: bucket,
+          Prefix: prefix,
+          MaxKeys: 50, // Increased to find all sessions
+        });
 
-    const response = await s3Client.send(command);
+        const response = await s3Client.send(command);
 
-    // Find master.m3u8 file
-    const masterFile = response.Contents?.find((obj) =>
-      obj.Key?.endsWith("/media/hls/master.m3u8"),
-    );
+        // Find master.m3u8 file
+        const masterFile = response.Contents?.find((obj) =>
+          obj.Key?.endsWith("/media/hls/master.m3u8"),
+        );
 
-    if (masterFile?.Key) {
-      // Extract session folder path (remove /media/hls/master.m3u8)
-      const sessionPath = masterFile.Key.replace("/media/hls/master.m3u8", "");
-      return `/${sessionPath}`;
+        if (masterFile?.Key) {
+          // Extract session folder path (remove /media/hls/master.m3u8)
+          const sessionPath = masterFile.Key.replace(
+            "/media/hls/master.m3u8",
+            "",
+          );
+          return `/${sessionPath}`;
+        }
+      } catch (prefixError) {
+        console.log(`Prefix ${prefix} not found, trying next...`);
+        continue;
+      }
     }
 
     return null;
