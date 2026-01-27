@@ -10,6 +10,7 @@ import { socketHelper } from "./helpers/socketHelper";
 import { setupProcessHandlers } from "./DB/processHandlers";
 import { setupSecurity } from "./DB/security";
 import { setupCluster } from "./DB/cluster";
+import { setupS3CORS } from "./utils/s3-cors-setup";
 
 // Define the types for the servers
 let httpServer: HttpServer;
@@ -22,6 +23,10 @@ export async function startServer() {
     validateConfig();
     // Connect to the database
     await connectToDatabase();
+
+    // Setup S3 CORS for video playback
+    await setupS3CORS();
+
     // Create HTTP server
     httpServer = createServer(app);
     const httpPort = Number(config.port);
@@ -37,8 +42,8 @@ export async function startServer() {
     httpServer.listen(httpPort, ipAddress, () => {
       logger.info(
         colors.yellow(
-          `♻️  Application listening on http://${ipAddress}:${httpPort}`
-        )
+          `♻️  Application listening on http://${ipAddress}:${httpPort}`,
+        ),
       );
     });
 
@@ -54,7 +59,7 @@ export async function startServer() {
     socketServer.listen(socketPort);
     socketHelper.socket(socketServer);
     logger.info(
-      colors.yellow(`♻️  Socket is listening on ${ipAddress}:${socketPort}`)
+      colors.yellow(`♻️  Socket is listening on ${ipAddress}:${socketPort}`),
     );
   } catch (error) {
     logger.error(colors.red("Failed to start server"), error);

@@ -516,9 +516,48 @@ const getStreamAnalytics = async (streamId: string, creatorId: string) => {
   };
 };
 
+// Helper: Generate signed URL for secure playback
+const generateSignedPlaybackUrl = async (
+  recordingUrl: string,
+  expiresIn: number = 3600,
+): Promise<string> => {
+  if (!recordingUrl) return "";
+
+  try {
+    const bucket = config.aws.bucket || "fernando-buckets";
+    const region = config.aws.region || "us-east-1";
+
+    // Normalize the recording URL
+    let s3Key = recordingUrl;
+
+    // If it's already a full S3 URL, extract the key
+    if (recordingUrl.includes("s3") || recordingUrl.includes("amazonaws")) {
+      const urlMatch = recordingUrl.match(/amazonaws\.com\/(.+)/);
+      if (urlMatch) {
+        s3Key = urlMatch[1];
+      }
+    }
+
+    // Remove leading slash if present
+    s3Key = s3Key.startsWith("/") ? s3Key.substring(1) : s3Key;
+
+    // Construct the HLS master playlist URL
+    const masterPlaylistUrl = `https://${bucket}.s3.${region}.amazonaws.com/${s3Key}${s3Key.endsWith("/") ? "" : "/"}media/hls/master.m3u8`;
+
+    return masterPlaylistUrl;
+  } catch (error) {
+    console.error("Error generating signed URL:", error);
+    // Fallback to regular URL
+    return generatePlaybackUrl(recordingUrl);
+  }
+};
+
 // Helper: Generate playback URL from recording URL
 const generatePlaybackUrl = (recordingUrl: string): string => {
   if (!recordingUrl) return "";
+
+  const bucket = config.aws.bucket || "fernando-buckets";
+  const region = config.aws.region || "us-east-1";
 
   // If it's already a full S3 URL, return as is
   if (recordingUrl.includes("s3") || recordingUrl.includes("amazonaws")) {
@@ -526,9 +565,6 @@ const generatePlaybackUrl = (recordingUrl: string): string => {
   }
 
   // If it's a relative IVS path, construct full S3 URL
-  const bucket = config.aws.bucket || "fernando-buckets";
-  const region = config.aws.region || "us-east-1";
-
   if (recordingUrl.startsWith("/")) {
     return `https://${bucket}.s3.${region}.amazonaws.com${recordingUrl}`;
   }
@@ -617,7 +653,7 @@ const getRecordedStreams = async (filters: {
     .sort({ endedAt: -1 }) // Latest ended streams first
     .lean();
 
-  // Add playbackUrl to each stream
+  // Add playbackUrl to each stream - using generatePlaybackUrl instead of async
   const streamsWithPlayback = streams.map((stream: any) => ({
     ...stream,
     playbackUrl: stream.recordingUrl

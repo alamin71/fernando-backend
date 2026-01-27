@@ -21,7 +21,7 @@ router.post(
   auth("creator"),
   upload.single("thumbnail"),
   validateZodSchema(streamValidation.createStreamSchema),
-  streamControllers.startLive
+  streamControllers.startLive,
 );
 
 /**
@@ -35,7 +35,7 @@ router.patch(
   "/:id/stop-live",
   auth("creator"),
   validateZodSchema(streamValidation.endStreamSchema),
-  streamControllers.endLive
+  streamControllers.endLive,
 );
 
 /**
@@ -49,7 +49,7 @@ router.patch(
   "/:id/stop-live",
   auth("creator"),
   validateZodSchema(streamValidation.endStreamSchema),
-  streamControllers.endLive
+  streamControllers.endLive,
 );
 
 /**
@@ -64,7 +64,7 @@ router.patch(
   auth("creator"),
   upload.single("thumbnail"),
   validateZodSchema(streamValidation.updateStreamSchema),
-  streamControllers.updateStream
+  streamControllers.updateStream,
 );
 
 // ==================== DISCOVER STREAMS ====================
@@ -78,7 +78,7 @@ router.patch(
 router.get(
   "/ingest-config",
   auth("creator"),
-  streamControllers.getIngestConfig
+  streamControllers.getIngestConfig,
 );
 
 // ==================== CHAT ROUTES ====================
@@ -87,7 +87,7 @@ router.get(
 router.get(
   "/:id/chat",
   validateZodSchema(chatValidation.getMessages),
-  streamChatControllers.getChatMessages
+  streamChatControllers.getChatMessages,
 );
 
 // Send a chat message (auth required)
@@ -95,14 +95,14 @@ router.post(
   "/:id/chat",
   auth(),
   validateZodSchema(chatValidation.sendMessage),
-  streamChatControllers.postChatMessage
+  streamChatControllers.postChatMessage,
 );
 
 // Delete a chat message (owner only)
 router.delete(
   "/:id/chat/:messageId",
   auth("creator"),
-  streamChatControllers.deleteChatMessage
+  streamChatControllers.deleteChatMessage,
 );
 
 /**
@@ -178,7 +178,7 @@ router.post("/:id/like", auth("creator"), streamControllers.toggleLike);
 router.get(
   "/:id/analytics",
   auth("creator"),
-  streamControllers.getStreamAnalytics
+  streamControllers.getStreamAnalytics,
 );
 
 /**
@@ -188,6 +188,14 @@ router.get(
  * Auth: Not required
  */
 router.get("/:id/watch", streamControllers.getStreamRecording);
+
+/**
+ * 🎬 GET PLAYBACK URL ONLY
+ * GET /api/v1/streams/:id/playback
+ * Purpose: খালি HLS playback URL পাওয়া (direct video player integration এর জন্য)
+ * Auth: Not required
+ */
+router.get("/:id/playback", streamControllers.getPlaybackUrl);
 
 /**
  * 📤 UPLOAD STREAM RECORDING (Save to S3)
@@ -200,7 +208,7 @@ router.post(
   "/:id/upload-recording",
   auth("creator"),
   upload.single("recording"),
-  streamControllers.uploadRecording
+  streamControllers.uploadRecording,
 );
 
 // ==================== STREAM DETAILS ====================

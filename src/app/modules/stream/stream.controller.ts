@@ -230,7 +230,7 @@ const getLikedStreams = catchAsync(async (req: Request, res: Response) => {
   const result = await streamService.getLikedStreams(
     userId,
     Number(page),
-    Number(limit)
+    Number(limit),
   );
 
   sendResponse(res, {
@@ -292,11 +292,47 @@ const getStreamRecording = catchAsync(async (req: Request, res: Response) => {
 
   const result = await streamService.getStreamRecording(id);
 
+  // Set CORS headers for video playback
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Range");
+  res.setHeader(
+    "Access-Control-Expose-Headers",
+    "Content-Length, Content-Range",
+  );
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: "Stream recording retrieved successfully",
     data: result,
+  });
+});
+
+// Get playback URL only (for direct video playback)
+const getPlaybackUrl = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const result = await streamService.getStreamRecording(id);
+
+  // Set CORS headers for video playback
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Range");
+  res.setHeader(
+    "Access-Control-Expose-Headers",
+    "Content-Length, Content-Range",
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Playback URL retrieved successfully",
+    data: {
+      streamId: result.streamId,
+      playbackUrl: result.playbackUrl,
+      title: result.title,
+    },
   });
 });
 
@@ -377,6 +413,7 @@ export const streamControllers = {
   getStreamAnalytics,
   getRecordedStreams,
   getStreamRecording,
+  getPlaybackUrl,
   uploadRecording,
   getIngestConfig,
 };
@@ -424,7 +461,7 @@ const deleteChatMessage = catchAsync(async (req: Request, res: Response) => {
   const result = await streamChatService.deleteMessage(
     id,
     messageId,
-    requesterId
+    requesterId,
   );
 
   sendResponse(res, {
@@ -445,9 +482,8 @@ export const streamChatControllers = {
 const deleteStream = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const { deleteStream: deleteStreamService } = await import(
-    "./stream.service"
-  );
+  const { deleteStream: deleteStreamService } =
+    await import("./stream.service");
   const result = await deleteStreamService(id);
 
   sendResponse(res, {
