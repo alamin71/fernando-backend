@@ -19,7 +19,7 @@ const generateStreamKey = (): string => {
 
 // Initialize IVS Client
 const ivsClient = new IvsClient({
-  region: config.aws.region || "ap-south-1",
+  region: config.aws.region || "us-east-1",
   credentials: {
     accessKeyId: config.aws.accessKeyId || "",
     secretAccessKey: config.aws.secretAccessKey || "",
@@ -28,7 +28,7 @@ const ivsClient = new IvsClient({
 
 // Initialize S3 Client
 const s3Client = new S3Client({
-  region: config.aws.region || "ap-south-1",
+  region: config.aws.region || "us-east-1",
   credentials: {
     accessKeyId: config.aws.accessKeyId || "",
     secretAccessKey: config.aws.secretAccessKey || "",
