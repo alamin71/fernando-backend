@@ -526,8 +526,8 @@ const generatePlaybackUrl = (recordingUrl: string): string => {
   }
 
   // If it's a relative IVS path, construct full S3 URL
-  const bucket = config.aws.bucket || "my-streams-bucket-ap-south-1";
-  const region = config.aws.region || "ap-south-1";
+  const bucket = config.aws.bucket || "fernando-buckets";
+  const region = config.aws.region || "us-east-1";
 
   if (recordingUrl.startsWith("/")) {
     return `https://${bucket}.s3.${region}.amazonaws.com${recordingUrl}`;
