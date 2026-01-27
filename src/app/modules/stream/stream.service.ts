@@ -550,7 +550,7 @@ const findRecordingPath = async (
     const minute = String(startDate.getMinutes()).padStart(2, "0");
 
     const prefix = `ivs/v1/${accountId}/${channelId}/${year}/${month}/${day}/${hour}/${minute}/`;
-    const bucket = config.aws.bucket || "my-streams-bucket-ap-south-1";
+    const bucket = config.aws.bucket || "fernando-buckets";
 
     const command = new ListObjectsV2Command({
       Bucket: bucket,
