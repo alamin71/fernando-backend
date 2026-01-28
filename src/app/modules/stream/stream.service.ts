@@ -590,17 +590,32 @@ const generatePlaybackUrl = (recordingUrl: string): string => {
   const bucket = config.aws.bucket || "fernando-buckets";
   const region = config.aws.region || "us-east-1";
 
-  // If it's already a full S3 URL, return as is
-  if (recordingUrl.includes("s3") || recordingUrl.includes("amazonaws")) {
+  // If it's already a full S3 URL with master.m3u8, return as is
+  if (
+    recordingUrl.includes("s3") ||
+    (recordingUrl.includes("amazonaws") && recordingUrl.includes("master.m3u8"))
+  ) {
     return recordingUrl;
   }
 
-  // If it's a relative IVS path, construct full S3 URL
-  if (recordingUrl.startsWith("/")) {
-    return `https://${bucket}.s3.${region}.amazonaws.com${recordingUrl}`;
+  // Remove leading slash if present
+  let cleanUrl = recordingUrl.startsWith("/")
+    ? recordingUrl.substring(1)
+    : recordingUrl;
+
+  // Remove trailing slash if present
+  cleanUrl = cleanUrl.endsWith("/")
+    ? cleanUrl.substring(0, cleanUrl.length - 1)
+    : cleanUrl;
+
+  // Construct full S3 URL with master.m3u8
+  if (recordingUrl.includes("amazonaws")) {
+    // Already a full URL, just append the playlist file
+    return `${cleanUrl}${cleanUrl.endsWith("/") ? "" : "/"}media/hls/master.m3u8`;
   }
 
-  return `https://${bucket}.s3.${region}.amazonaws.com/${recordingUrl}`;
+  // Relative IVS path
+  return `https://${bucket}.s3.${region}.amazonaws.com/${cleanUrl}/media/hls/master.m3u8`;
 };
 
 // Helper: Find actual IVS recording path in S3
