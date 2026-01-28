@@ -757,122 +757,125 @@ const getRecordedStreams = async (filters: {
 
     // Build final results by enriching S3 recordings with database data
     const enrichedRecordingsPromises = s3Recordings.map(async (recording) => {
-        // Try to extract date from recording path
-        // Path format: /ivs/v1/{accountId}/{channelId}/{year}/{month}/{day}/{hour}/{minute}/{sessionId}
-        const pathParts = recording.path.split("/");
-        const year = pathParts[5];
-        const month = pathParts[6];
-        const day = pathParts[7];
-        const hour = pathParts[8];
-        const minute = pathParts[9];
+      // Try to extract date from recording path
+      // Path format: /ivs/v1/{accountId}/{channelId}/{year}/{month}/{day}/{hour}/{minute}/{sessionId}
+      const pathParts = recording.path.split("/");
+      const year = pathParts[5];
+      const month = pathParts[6];
+      const day = pathParts[7];
+      const hour = pathParts[8];
+      const minute = pathParts[9];
 
-        // Try to find matching stream in database by date
-        let matchedStream = null;
+      // Try to find matching stream in database by date
+      let matchedStream = null;
 
-        // Try broader search by date (YYYY-MM-DD)
-        if (year && month && day) {
-          const streamsOnDate = allOfflineStreams.filter((s: any) => {
-            const sDate = new Date(s.startedAt);
-            return (
-              sDate.getFullYear() === parseInt(year) &&
-              sDate.getMonth() + 1 === parseInt(month) &&
-              sDate.getDate() === parseInt(day)
-            );
+      // Try broader search by date (YYYY-MM-DD)
+      if (year && month && day) {
+        const streamsOnDate = allOfflineStreams.filter((s: any) => {
+          const sDate = new Date(s.startedAt);
+          return (
+            sDate.getFullYear() === parseInt(year) &&
+            sDate.getMonth() + 1 === parseInt(month) &&
+            sDate.getDate() === parseInt(day)
+          );
+        });
+
+        if (streamsOnDate.length > 0) {
+          // Pick the one closest to the recorded time
+          matchedStream = streamsOnDate.reduce((prev: any, curr: any) => {
+            const currTime = new Date(curr.startedAt).getTime();
+            const prevTime = new Date(prev.startedAt).getTime();
+            const recordingTime = recording.modifiedAt.getTime();
+
+            const currDiff = Math.abs(currTime - recordingTime);
+            const prevDiff = Math.abs(prevTime - recordingTime);
+
+            return currDiff < prevDiff ? curr : prev;
           });
-
-          if (streamsOnDate.length > 0) {
-            // Pick the one closest to the recorded time
-            matchedStream = streamsOnDate.reduce((prev: any, curr: any) => {
-              const currTime = new Date(curr.startedAt).getTime();
-              const prevTime = new Date(prev.startedAt).getTime();
-              const recordingTime = recording.modifiedAt.getTime();
-
-              const currDiff = Math.abs(currTime - recordingTime);
-              const prevDiff = Math.abs(prevTime - recordingTime);
-
-              return currDiff < prevDiff ? curr : prev;
-            });
-          }
         }
+      }
 
-        // Apply filters
-        if (
-          creatorId &&
-          matchedStream?.creatorId?.toString() !== creatorId.toString()
-        ) {
+      // Apply filters
+      if (
+        creatorId &&
+        matchedStream?.creatorId?.toString() !== creatorId.toString()
+      ) {
+        return null;
+      }
+
+      if (
+        categoryId &&
+        matchedStream?.categoryId?.toString() !== categoryId.toString()
+      ) {
+        return null;
+      }
+
+      if (search && matchedStream) {
+        const searchLower = search.toLowerCase();
+        const matchesSearch =
+          (matchedStream.title &&
+            matchedStream.title.toLowerCase().includes(searchLower)) ||
+          (matchedStream.description &&
+            matchedStream.description.toLowerCase().includes(searchLower));
+        if (!matchesSearch) {
           return null;
         }
+      }
 
-        if (
-          categoryId &&
-          matchedStream?.categoryId?.toString() !== categoryId.toString()
-        ) {
+      // Skip if explicitly marked as deleted in database
+      if (matchedStream && matchedStream.isDeleted) {
+        return null;
+      }
+
+      // If no database entry exists, create one for this S3 recording
+      if (!matchedStream) {
+        try {
+          const newStream = await Stream.create({
+            title: "Live Stream",
+            description: "",
+            status: "OFFLINE",
+            recordingUrl: recording.path,
+            playbackUrl: generatePlaybackUrl(recording.path),
+            startedAt: recording.modifiedAt,
+            endedAt: recording.modifiedAt,
+            durationSeconds: 0,
+            streamKey: `auto-${Date.now()}`, // Unique key
+            creatorId: null, // No creator for orphaned recordings
+          });
+          matchedStream = newStream;
+          console.log(
+            `[getRecordedStreams] Created DB entry for S3 recording: ${recording.path}`,
+          );
+        } catch (error) {
+          console.error(`[getRecordedStreams] Error creating DB entry:`, error);
+          // If creation fails, skip this recording
           return null;
         }
+      }
 
-        if (search && matchedStream) {
-          const searchLower = search.toLowerCase();
-          const matchesSearch =
-            (matchedStream.title &&
-              matchedStream.title.toLowerCase().includes(searchLower)) ||
-            (matchedStream.description &&
-              matchedStream.description.toLowerCase().includes(searchLower));
-          if (!matchesSearch) {
-            return null;
-          }
-        }
+      // Build the enriched object
+      const streamId = matchedStream._id;
+      return {
+        streamId: streamId.toString(),
+        _id: streamId,
+        title: matchedStream.title || "Live Stream",
+        description: matchedStream.description || "",
+        thumbnail: matchedStream.thumbnail || "",
+        recordingUrl: recording.path,
+        playbackUrl: generatePlaybackUrl(recording.path),
+        durationSeconds: matchedStream.durationSeconds || 0,
+        totalViews: matchedStream.totalViews || 0,
+        totalLikes: matchedStream.totalLikes || 0,
+        startedAt: matchedStream.startedAt || recording.modifiedAt,
+        endedAt: matchedStream.endedAt || recording.modifiedAt,
+        creatorId: matchedStream.creatorId || null,
+        categoryId: matchedStream.categoryId || null,
+      };
+    });
 
-        // Skip if explicitly marked as deleted in database
-        if (matchedStream && matchedStream.isDeleted) {
-          return null;
-        }
-
-        // If no database entry exists, create one for this S3 recording
-        if (!matchedStream) {
-          try {
-            const newStream = await Stream.create({
-              title: "Live Stream",
-              description: "",
-              status: "OFFLINE",
-              recordingUrl: recording.path,
-              playbackUrl: generatePlaybackUrl(recording.path),
-              startedAt: recording.modifiedAt,
-              endedAt: recording.modifiedAt,
-              durationSeconds: 0,
-              streamKey: `auto-${Date.now()}`, // Unique key
-              creatorId: null, // No creator for orphaned recordings
-            });
-            matchedStream = newStream;
-            console.log(`[getRecordedStreams] Created DB entry for S3 recording: ${recording.path}`);
-          } catch (error) {
-            console.error(`[getRecordedStreams] Error creating DB entry:`, error);
-            // If creation fails, skip this recording
-            return null;
-          }
-        }
-
-        // Build the enriched object
-        const streamId = matchedStream._id;
-        return {
-          streamId: streamId.toString(),
-          _id: streamId,
-          title: matchedStream.title || "Live Stream",
-          description: matchedStream.description || "",
-          thumbnail: matchedStream.thumbnail || "",
-          recordingUrl: recording.path,
-          playbackUrl: generatePlaybackUrl(recording.path),
-          durationSeconds: matchedStream.durationSeconds || 0,
-          totalViews: matchedStream.totalViews || 0,
-          totalLikes: matchedStream.totalLikes || 0,
-          startedAt: matchedStream.startedAt || recording.modifiedAt,
-          endedAt: matchedStream.endedAt || recording.modifiedAt,
-          creatorId: matchedStream.creatorId || null,
-          categoryId: matchedStream.categoryId || null,
-        };
-      });
-
-    const enrichedRecordings = (await Promise.all(enrichedRecordingsPromises))
-      .filter((item) => item !== null);
+    const enrichedRecordings = (
+      await Promise.all(enrichedRecordingsPromises)
+    ).filter((item) => item !== null);
 
     // Apply pagination
     const paginatedRecordings = enrichedRecordings.slice(

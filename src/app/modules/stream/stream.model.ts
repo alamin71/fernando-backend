@@ -6,7 +6,7 @@ const streamSchema = new Schema<IStream, StreamModel>(
     creatorId: {
       type: Schema.Types.ObjectId as any,
       ref: "User",
-      required: true,
+      required: false,
       index: true,
     },
     title: { type: String, required: true, index: true },
