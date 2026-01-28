@@ -22,10 +22,6 @@ const followSchema = new Schema<IFollow, FollowModel>(
 // Prevent duplicate follows
 followSchema.index({ followerId: 1, followingId: 1 }, { unique: true });
 
-// Indexes for queries
-followSchema.index({ followerId: 1 }); // User's following list
-// followSchema.index({ followingId: 1 }); // Already indexed in field definition above
-
 followSchema.statics.getFollowingStreams = async function (
   userId: string,
   limit: number = 20,
