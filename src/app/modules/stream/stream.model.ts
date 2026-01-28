@@ -52,11 +52,11 @@ const streamSchema = new Schema<IStream, StreamModel>(
 
     // Report tracking
     isReported: { type: Boolean, default: false, index: true },
-    
+
     // Deletion tracking
     isDeleted: { type: Boolean, default: false, index: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Indexes for query optimization
@@ -69,7 +69,7 @@ streamSchema.index({ totalViews: -1 }); // Popular streams
 // TTL index for 3-month data retention (delete offline streams after 90 days)
 streamSchema.index(
   { endedAt: 1 },
-  { expireAfterSeconds: 7776000, sparse: true } // 90 days
+  { expireAfterSeconds: 7776000, sparse: true }, // 90 days
 );
 
 streamSchema.statics.findLiveStreams = async function () {

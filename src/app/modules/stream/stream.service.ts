@@ -829,8 +829,10 @@ const getRecordedStreams = async (filters: {
         }
 
         // Build the enriched object
+        const streamId = matchedStream?._id || new mongoose.Types.ObjectId();
         return {
-          _id: matchedStream?._id || new mongoose.Types.ObjectId(),
+          streamId: streamId.toString(),
+          _id: streamId,
           title: matchedStream?.title || "Live Stream",
           description: matchedStream?.description || "",
           thumbnail: matchedStream?.thumbnail || "",
@@ -1002,7 +1004,7 @@ const deleteStream = async (streamId: string) => {
     try {
       const { DeleteObjectCommand } = await import("@aws-sdk/client-s3");
       const bucket = config.aws.bucket || "fernando-buckets";
-      
+
       // Remove leading slash and construct the S3 key
       let s3Key = stream.recordingUrl.startsWith("/")
         ? stream.recordingUrl.substring(1)
