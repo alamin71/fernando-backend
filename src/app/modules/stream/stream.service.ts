@@ -732,9 +732,6 @@ const getRecordedStreams = async (filters: {
       (a, b) => b.modifiedAt.getTime() - a.modifiedAt.getTime(),
     );
 
-    // Now match S3 recordings with database streams
-    const streamDataMap = new Map<string, any>();
-
     // Get all OFFLINE streams and map them by date
     const allOfflineStreams = await Stream.find({
       status: "OFFLINE",
@@ -770,13 +767,11 @@ const getRecordedStreams = async (filters: {
         const hour = pathParts[8];
         const minute = pathParts[9];
 
-        // Try to find matching stream in database
-        const dateKey = `${year}/${month}/${day}/${hour}/${minute}`;
-        let matchedStream = streamDataMap.get(dateKey)?.[0];
+        // Try to find matching stream in database by date
+        let matchedStream = null;
 
-        // If no exact match, try broader search by date
-        if (!matchedStream && year && month && day) {
-          const dateKeyBroad = `${year}/${month}/${day}`;
+        // Try broader search by date (YYYY-MM-DD)
+        if (year && month && day) {
           const streamsOnDate = allOfflineStreams.filter((s: any) => {
             const sDate = new Date(s.startedAt);
             return (
