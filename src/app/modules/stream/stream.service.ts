@@ -756,8 +756,7 @@ const getRecordedStreams = async (filters: {
     });
 
     // Build final results by enriching S3 recordings with database data
-    const enrichedRecordings = s3Recordings
-      .map((recording) => {
+    const enrichedRecordingsPromises = s3Recordings.map(async (recording) => {
         // Try to extract date from recording path
         // Path format: /ivs/v1/{accountId}/{channelId}/{year}/{month}/{day}/{hour}/{minute}/{sessionId}
         const pathParts = recording.path.split("/");
@@ -828,25 +827,51 @@ const getRecordedStreams = async (filters: {
           return null;
         }
 
-        // Build the enriched object (even if no database match)
-        const streamId = matchedStream?._id || new mongoose.Types.ObjectId();
+        // If no database entry exists, create one for this S3 recording
+        if (!matchedStream) {
+          try {
+            const newStream = await Stream.create({
+              title: "Live Stream",
+              description: "",
+              status: "OFFLINE",
+              recordingUrl: recording.path,
+              playbackUrl: generatePlaybackUrl(recording.path),
+              startedAt: recording.modifiedAt,
+              endedAt: recording.modifiedAt,
+              durationSeconds: 0,
+              streamKey: `auto-${Date.now()}`, // Unique key
+              creatorId: null, // No creator for orphaned recordings
+            });
+            matchedStream = newStream;
+            console.log(`[getRecordedStreams] Created DB entry for S3 recording: ${recording.path}`);
+          } catch (error) {
+            console.error(`[getRecordedStreams] Error creating DB entry:`, error);
+            // If creation fails, skip this recording
+            return null;
+          }
+        }
+
+        // Build the enriched object
+        const streamId = matchedStream._id;
         return {
           streamId: streamId.toString(),
           _id: streamId,
-          title: matchedStream?.title || "Live Stream",
-          description: matchedStream?.description || "",
-          thumbnail: matchedStream?.thumbnail || "",
+          title: matchedStream.title || "Live Stream",
+          description: matchedStream.description || "",
+          thumbnail: matchedStream.thumbnail || "",
           recordingUrl: recording.path,
           playbackUrl: generatePlaybackUrl(recording.path),
-          durationSeconds: matchedStream?.durationSeconds || 0,
-          totalViews: matchedStream?.totalViews || 0,
-          totalLikes: matchedStream?.totalLikes || 0,
-          startedAt: matchedStream?.startedAt || recording.modifiedAt,
-          endedAt: matchedStream?.endedAt || recording.modifiedAt,
-          creatorId: matchedStream?.creatorId || null,
-          categoryId: matchedStream?.categoryId || null,
+          durationSeconds: matchedStream.durationSeconds || 0,
+          totalViews: matchedStream.totalViews || 0,
+          totalLikes: matchedStream.totalLikes || 0,
+          startedAt: matchedStream.startedAt || recording.modifiedAt,
+          endedAt: matchedStream.endedAt || recording.modifiedAt,
+          creatorId: matchedStream.creatorId || null,
+          categoryId: matchedStream.categoryId || null,
         };
-      })
+      });
+
+    const enrichedRecordings = (await Promise.all(enrichedRecordingsPromises))
       .filter((item) => item !== null);
 
     // Apply pagination
