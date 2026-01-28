@@ -828,7 +828,7 @@ const getRecordedStreams = async (filters: {
         }
 
         // Build the enriched object
-        return {
+        const enrichedObject: any = {
           _id: matchedStream?._id || new mongoose.Types.ObjectId(),
           title: matchedStream?.title || "Live Stream",
           description: matchedStream?.description || "",
@@ -840,9 +840,17 @@ const getRecordedStreams = async (filters: {
           totalLikes: matchedStream?.totalLikes || 0,
           startedAt: matchedStream?.startedAt || recording.modifiedAt,
           endedAt: matchedStream?.endedAt || recording.modifiedAt,
-          creatorId: matchedStream?.creatorId || null,
-          categoryId: matchedStream?.categoryId || null,
         };
+
+        // Only include creatorId and categoryId if they exist
+        if (matchedStream?.creatorId) {
+          enrichedObject.creatorId = matchedStream.creatorId;
+        }
+        if (matchedStream?.categoryId) {
+          enrichedObject.categoryId = matchedStream.categoryId;
+        }
+
+        return enrichedObject;
       })
       .filter((item) => item !== null);
 
