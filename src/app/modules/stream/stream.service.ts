@@ -170,17 +170,13 @@ const endLive = async (
 
     if (actualPath) {
       updateData.recordingUrl = actualPath;
-    } else {
-      // Fallback: approximate path (may be incomplete)
-      const year = startDate.getFullYear();
-      const month = String(startDate.getMonth() + 1).padStart(2, "0");
-      const day = String(startDate.getDate()).padStart(2, "0");
-      const hour = String(startDate.getHours()).padStart(2, "0");
-      const minute = String(startDate.getMinutes()).padStart(2, "0");
-      updateData.recordingUrl = `/ivs/v1/${accountId}/${channelId}/${year}/${month}/${day}/${hour}/${minute}`;
     }
-  } else if (stream.startedAt) {
-    // Compute duration from start/ended timestamps if not provided
+    // If recording not found in S3 yet, don't set a fallback URL
+    // It will be populated later via webhook or re-fetch when viewing
+  }
+
+  // Compute duration from start/ended timestamps if not provided
+  if (stream.startedAt) {
     updateData.durationSeconds = Math.max(
       0,
       Math.floor((endedAt.getTime() - stream.startedAt.getTime()) / 1000),
@@ -207,6 +203,23 @@ const getStreamById = async (streamId: string) => {
 
   if (!stream) {
     throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
+  }
+
+  // If stream is offline and has no recording URL yet, try to find it in S3
+  if (stream.status === "OFFLINE" && !stream.recordingUrl && stream.startedAt) {
+    const channelId = config.ivs.channelArn?.split("/").pop() || "2DmwQzILLrtf";
+    const accountId = "504956988903";
+    const recordingPath = await findRecordingPath(
+      accountId,
+      channelId,
+      stream.startedAt,
+    );
+
+    if (recordingPath) {
+      // Update the stream with the found recording path
+      await Stream.findByIdAndUpdate(streamId, { recordingUrl: recordingPath });
+      stream.recordingUrl = recordingPath;
+    }
   }
 
   const analytics = await StreamAnalytics.findOne({ streamId });
