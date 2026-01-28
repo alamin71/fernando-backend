@@ -823,28 +823,28 @@ const getRecordedStreams = async (filters: {
           }
         }
 
-        // Only return if there's a matched stream in database
-        if (!matchedStream) {
+        // Skip if explicitly marked as deleted in database
+        if (matchedStream && matchedStream.isDeleted) {
           return null;
         }
 
-        // Build the enriched object
-        const streamId = matchedStream._id;
+        // Build the enriched object (even if no database match)
+        const streamId = matchedStream?._id || new mongoose.Types.ObjectId();
         return {
-          streamId: streamId?.toString(),
+          streamId: streamId.toString(),
           _id: streamId,
-          title: matchedStream.title || "Live Stream",
-          description: matchedStream.description || "",
-          thumbnail: matchedStream.thumbnail || "",
+          title: matchedStream?.title || "Live Stream",
+          description: matchedStream?.description || "",
+          thumbnail: matchedStream?.thumbnail || "",
           recordingUrl: recording.path,
           playbackUrl: generatePlaybackUrl(recording.path),
-          durationSeconds: matchedStream.durationSeconds || 0,
-          totalViews: matchedStream.totalViews || 0,
-          totalLikes: matchedStream.totalLikes || 0,
-          startedAt: matchedStream.startedAt || recording.modifiedAt,
-          endedAt: matchedStream.endedAt || recording.modifiedAt,
-          creatorId: matchedStream.creatorId || null,
-          categoryId: matchedStream.categoryId || null,
+          durationSeconds: matchedStream?.durationSeconds || 0,
+          totalViews: matchedStream?.totalViews || 0,
+          totalLikes: matchedStream?.totalLikes || 0,
+          startedAt: matchedStream?.startedAt || recording.modifiedAt,
+          endedAt: matchedStream?.endedAt || recording.modifiedAt,
+          creatorId: matchedStream?.creatorId || null,
+          categoryId: matchedStream?.categoryId || null,
         };
       })
       .filter((item) => item !== null);
