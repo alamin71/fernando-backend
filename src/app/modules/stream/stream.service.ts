@@ -593,32 +593,46 @@ const findRecordingPath = async (
 ): Promise<string | null> => {
   try {
     const year = startDate.getFullYear();
-    const month = String(startDate.getMonth() + 1).padStart(2, "0");
-    const day = String(startDate.getDate()).padStart(2, "0");
-
-    // Search the entire date folder (YYYY/MM/DD) - recordings will be in subfolders
-    const datePrefix = `ivs/v1/${accountId}/${channelId}/${year}/${month}/${day}/`;
+    const month = String(startDate.getMonth() + 1);
+    const day = String(startDate.getDate());
     const bucket = config.aws.bucket || "fernando-buckets";
 
-    const command = new ListObjectsV2Command({
-      Bucket: bucket,
-      Prefix: datePrefix,
-      MaxKeys: 100, // Get more files to find master.m3u8
-    });
+    // IVS uses inconsistent path formats - try both zero-padded and non-zero-padded
+    const prefixesToTry = [
+      // Non-zero-padded (what IVS actually uses most of the time)
+      `ivs/v1/${accountId}/${channelId}/${year}/${month}/${day}/`,
+      // Zero-padded (for consistency)
+      `ivs/v1/${accountId}/${channelId}/${year}/${month.padStart(2, "0")}/${day.padStart(2, "0")}/`,
+    ];
 
-    const response = await s3Client.send(command);
+    for (const datePrefix of prefixesToTry) {
+      console.log(`Searching S3 with prefix: ${datePrefix}`);
 
-    // Find any master.m3u8 file (first match)
-    const masterFile = response.Contents?.find((obj) =>
-      obj.Key?.endsWith("/media/hls/master.m3u8"),
-    );
+      const command = new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: datePrefix,
+        MaxKeys: 100,
+      });
 
-    if (masterFile?.Key) {
-      // Extract session folder path (remove /media/hls/master.m3u8)
-      const sessionPath = masterFile.Key.replace("/media/hls/master.m3u8", "");
-      return `/${sessionPath}`;
+      const response = await s3Client.send(command);
+
+      // Find any master.m3u8 file (first match)
+      const masterFile = response.Contents?.find((obj) =>
+        obj.Key?.endsWith("/media/hls/master.m3u8"),
+      );
+
+      if (masterFile?.Key) {
+        // Extract session folder path (remove /media/hls/master.m3u8)
+        const sessionPath = masterFile.Key.replace(
+          "/media/hls/master.m3u8",
+          "",
+        );
+        console.log(`✅ Found recording: ${sessionPath}`);
+        return `/${sessionPath}`;
+      }
     }
 
+    console.log(`❌ No recording found for date: ${year}/${month}/${day}`);
     return null;
   } catch (error) {
     console.error("Failed to find recording path:", error);
