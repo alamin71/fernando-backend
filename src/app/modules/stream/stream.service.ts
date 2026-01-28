@@ -580,10 +580,10 @@ const findRecordingPath = async (
 ): Promise<string | null> => {
   try {
     const year = startDate.getFullYear();
-    const month = String(startDate.getMonth() + 1);
-    const day = String(startDate.getDate());
+    const month = String(startDate.getMonth() + 1).padStart(2, "0");
+    const day = String(startDate.getDate()).padStart(2, "0");
 
-    // Search the entire date folder (YYYY/M/D) - recordings will be in subfolders
+    // Search the entire date folder (YYYY/MM/DD) - recordings will be in subfolders
     const datePrefix = `ivs/v1/${accountId}/${channelId}/${year}/${month}/${day}/`;
     const bucket = config.aws.bucket || "fernando-buckets";
 
