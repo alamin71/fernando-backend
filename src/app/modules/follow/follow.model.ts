@@ -16,7 +16,7 @@ const followSchema = new Schema<IFollow, FollowModel>(
       index: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Prevent duplicate follows
@@ -24,11 +24,11 @@ followSchema.index({ followerId: 1, followingId: 1 }, { unique: true });
 
 // Indexes for queries
 followSchema.index({ followerId: 1 }); // User's following list
-followSchema.index({ followingId: 1 }); // User's followers list
+// followSchema.index({ followingId: 1 }); // Already indexed in field definition above
 
 followSchema.statics.getFollowingStreams = async function (
   userId: string,
-  limit: number = 20
+  limit: number = 20,
 ) {
   // Get users that current user follows, then get their live streams
   return await this.aggregate([
