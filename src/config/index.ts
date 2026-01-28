@@ -63,7 +63,7 @@ export default {
     bucket: process.env.AWS_BUCKET_NAME,
   },
   ivs: {
-    region: process.env.IVS_REGION,
+    // region: process.env.IVS_REGION,
     ingestEndpoint: process.env.IVS_INGEST_ENDPOINT,
     streamKey: process.env.IVS_STREAM_KEY,
     playbackUrl: process.env.IVS_PLAYBACK_URL,

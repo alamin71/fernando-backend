@@ -1,0 +1,115 @@
+╔════════════════════════════════════════════════════════════╗
+║           UNDERSTANDING IVS BROADCASTING                    ║
+╚════════════════════════════════════════════════════════════╝
+
+আপনার Backend API: Stream database record রাখে
+আপনার Frontend: Actual video broadcast করে
+
+═════════════════════════════════════════════════════════════
+
+CURRENT FLOW (WRONG):
+───────────────────
+Frontend API Call
+    ↓
+POST /api/v1/streams (startLive)
+    ↓
+Database: Create Stream record
+    ↓
+Return IVS credentials
+    ↓
+❌ VIDEO BROADCAST হয় না
+    ↓
+PUT /api/v1/streams/:id/end (endLive)
+    ↓
+Database: Update Stream (OFFLINE)
+    ↓
+S3 তে recording নেই ❌
+
+═════════════════════════════════════════════════════════════
+
+CORRECT FLOW:
+─────────────
+1️⃣  Frontend: POST /api/v1/streams (startLive)
+        ↓
+        Return: IVS_INGEST_ENDPOINT + IVS_STREAM_KEY
+        
+2️⃣  Frontend: Connect to IVS & Start Streaming
+        ↓
+        RTMPS Server: rtmps://bdfffd168b47.global-contribute.live-video.net:443/app/
+        Stream Key: sk_us-east-1_aOnw31UmmeVz_CeSex8BYDPzlfPQa03mUZ9KOZQMcYi
+        
+3️⃣  Video frames → IVS Server
+        ↓
+        ✅ IVS receives video
+        ✅ IVS broadcasts to viewers
+        ✅ IVS records to S3 (automatic)
+        
+4️⃣  Frontend: Stop Streaming
+        ↓
+5️⃣  Frontend: PUT /api/v1/streams/:id/end (endLive)
+        ↓
+        ✅ S3 এ recording save আছে
+        ✅ Database updated
+
+═════════════════════════════════════════════════════════════
+
+KEY POINT: Video broadcast আপনার API তে না, IVS server এ হয়!
+
+আপনার API শুধু:
+✓ Credentials দেয়
+✓ Database record রাখে
+✓ S3 recordings খোঁজে
+
+কিন্তু actual video broadcasting যায় IVS INGEST ENDPOINT এ
+(rtmps://bdfffd168b47.global-contribute.live-video.net:443/app/)
+
+═════════════════════════════════════════════════════════════
+
+HOW TO TEST:
+
+Option 1: OBS Studio (Desktop)
+────────────────────────────
+1. Download: https://obsproject.com/
+2. Settings → Stream
+   ├─ Service: Custom...
+   ├─ Server: rtmps://bdfffd168b47.global-contribute.live-video.net:443/app/
+   └─ Stream Key: sk_us-east-1_aOnw31UmmeVz_CeSex8BYDPzlfPQa03mUZ9KOZQMcYi
+3. Add video source (Screen/Webcam)
+4. Click "Start Streaming" (30+ seconds)
+5. Watch: https://bdfffd168b47.us-east-1.playback.live-video.net/api/video/v1/us-east-1.504956988903.channel.2DmwQzILLrtf.m3u8
+
+Option 2: FFmpeg (Terminal)
+───────────────────────────
+ffmpeg -f gdigrab -i desktop \
+  -c:v libx264 -preset ultrafast -b:v 2500k \
+  -c:a aac \
+  -f flv "rtmps://sk_us-east-1_aOnw31UmmeVz_CeSex8BYDPzlfPQa03mUZ9KOZQMcYi@bdfffd168b47.global-contribute.live-video.net:443/app/"
+
+Option 3: GStreamer
+──────────────────
+gst-launch-1.0 videotestsrc pattern=ball \
+  ! x264enc \
+  ! queue \
+  ! mux. \
+  audiotestsrc \
+  ! voaacenc \
+  ! queue \
+  ! mux. \
+  flvmux name=mux \
+  ! rtmpsink location="rtmps://sk_us-east-1_aOnw31UmmeVz_CeSex8BYDPzlfPQa03mUZ9KOZQMcYi@bdfffd168b47.global-contribute.live-video.net:443/app/"
+
+═════════════════════════════════════════════════════════════
+
+আপনার FRONTEND এ কি করতে হবে:
+
+1. startLive API call করো
+2. সেখান থেকে IVS credentials পাবে
+3. সেই credentials ব্যবহার করে video broadcast করো
+4. Browser এ native WebRTC/RTMPS library ব্যবহার করো
+
+Library suggestions:
+- amazon-ivs-web-broadcast (AWS official)
+- hls.js (for playback)
+- video.js (player)
+
+═════════════════════════════════════════════════════════════

@@ -675,7 +675,9 @@ const getRecordedStreams = async (filters: {
     const accountId = getAccountIdFromArn();
     const basePrefix = `ivs/v1/${accountId}/${channelId}/`;
 
-    console.log(`Fetching all IVS recordings from S3 prefix: ${basePrefix}`);
+    console.log(
+      `[getRecordedStreams] Fetching all IVS recordings from: ${basePrefix}`,
+    );
 
     // List all master.m3u8 files in the IVS folder
     const s3Recordings: Array<{ path: string; modifiedAt: Date }> = [];
@@ -706,7 +708,9 @@ const getRecordedStreams = async (filters: {
       continuationToken = response.NextContinuationToken;
     } while (continuationToken);
 
-    console.log(`Found ${s3Recordings.length} recordings in S3`);
+    console.log(
+      `[getRecordedStreams] Found ${s3Recordings.length} recordings in S3`,
+    );
 
     // Sort by modified date descending (newest first)
     s3Recordings.sort(
@@ -725,23 +729,16 @@ const getRecordedStreams = async (filters: {
       .select("-streamKey")
       .lean();
 
-    // Create a map of streams by their start date (year/month/day/hour/minute)
+    // Create a map of streams by their start date (simple YYYY-MM-DD format)
+    const streamsByDate = new Map<string, any[]>();
     allOfflineStreams.forEach((stream: any) => {
       if (stream.startedAt) {
         const date = new Date(stream.startedAt);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1);
-        const day = String(date.getDate());
-        const hour = String(date.getHours()).padStart(2, "0");
-        const minute = String(date.getMinutes()).padStart(2, "0");
-
-        // Create a key for matching (we'll try to match the date/time)
-        const dateKey = `${year}/${month}/${day}/${hour}/${minute}`;
-
-        if (!streamDataMap.has(dateKey)) {
-          streamDataMap.set(dateKey, []);
+        const dateKey = date.toISOString().split("T")[0]; // YYYY-MM-DD
+        if (!streamsByDate.has(dateKey)) {
+          streamsByDate.set(dateKey, []);
         }
-        streamDataMap.get(dateKey)!.push(stream);
+        streamsByDate.get(dateKey)!.push(stream);
       }
     });
 
