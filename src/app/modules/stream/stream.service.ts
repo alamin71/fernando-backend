@@ -580,16 +580,18 @@ const findRecordingPath = async (
 ): Promise<string | null> => {
   try {
     const year = startDate.getFullYear();
-    // Non-padded format (S3 structure uses 1, not 01)
+    // All non-padded format (S3 structure uses 1, not 01 for all)
     const month = String(startDate.getMonth() + 1);
     const day = String(startDate.getDate());
-    const hour = String(startDate.getHours()).padStart(2, "0");
-    const minute = String(startDate.getMinutes()).padStart(2, "0");
+    const hour = String(startDate.getHours());
+    const minute = String(startDate.getMinutes());
 
     // Try multiple paths - IVS might use different formats
     const possiblePrefixes = [
+      // Non-padded all
       `ivs/v1/${accountId}/${channelId}/${year}/${month}/${day}/${hour}/${minute}/`,
-      `ivs/v1/${accountId}/${channelId}/${year}/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}/${hour}/${minute}/`,
+      // Padded all
+      `ivs/v1/${accountId}/${channelId}/${year}/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}/${String(hour).padStart(2, "0")}/${String(minute).padStart(2, "0")}/`,
     ];
 
     const bucket = config.aws.bucket || "fernando-buckets";
@@ -669,13 +671,42 @@ const getRecordedStreams = async (filters: {
     .sort({ endedAt: -1 }) // Latest ended streams first
     .lean();
 
-  // Add playbackUrl to each stream - using generatePlaybackUrl instead of async
-  const streamsWithPlayback = streams.map((stream: any) => ({
-    ...stream,
-    playbackUrl: stream.recordingUrl
-      ? `${generatePlaybackUrl(stream.recordingUrl)}/media/hls/master.m3u8`
-      : "",
-  }));
+  // Add playbackUrl to each stream with fresh S3 search for session ID
+  const streamsWithPlayback = await Promise.all(
+    streams.map(async (stream: any) => {
+      let finalRecordingUrl = stream.recordingUrl;
+
+      // Try to find actual recording path from S3 (with session ID)
+      if (stream.startedAt) {
+        const accountId =
+          config.ivs.channelArn?.split("/").pop() || "2DmwQzILLrtf";
+        const channelId = "2DmwQzILLrtf";
+        const startDate = new Date(stream.startedAt);
+
+        try {
+          const actualPath = await findRecordingPath(
+            accountId,
+            channelId,
+            startDate,
+          );
+          if (actualPath) {
+            finalRecordingUrl = actualPath;
+          }
+        } catch (error) {
+          console.log("Could not find updated recording path:", error);
+          // Use fallback
+        }
+      }
+
+      return {
+        ...stream,
+        recordingUrl: finalRecordingUrl,
+        playbackUrl: finalRecordingUrl
+          ? `${generatePlaybackUrl(finalRecordingUrl)}/media/hls/master.m3u8`
+          : "",
+      };
+    }),
+  );
 
   const total = await Stream.countDocuments(filterObj);
 
