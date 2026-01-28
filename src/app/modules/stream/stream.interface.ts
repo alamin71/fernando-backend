@@ -33,6 +33,9 @@ export interface IStream {
   // Report tracking
   isReported?: boolean;
 
+  // Deletion tracking
+  isDeleted?: boolean;
+
   createdAt: Date;
   updatedAt: Date;
 }

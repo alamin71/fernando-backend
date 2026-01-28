@@ -738,6 +738,7 @@ const getRecordedStreams = async (filters: {
     // Get all OFFLINE streams and map them by date
     const allOfflineStreams = await Stream.find({
       status: "OFFLINE",
+      isDeleted: false,
     })
       .populate("creatorId", "username channelName image creatorStats")
       .populate("categoryId", "name")
@@ -828,7 +829,7 @@ const getRecordedStreams = async (filters: {
         }
 
         // Build the enriched object
-        const enrichedObject: any = {
+        return {
           _id: matchedStream?._id || new mongoose.Types.ObjectId(),
           title: matchedStream?.title || "Live Stream",
           description: matchedStream?.description || "",
@@ -840,17 +841,9 @@ const getRecordedStreams = async (filters: {
           totalLikes: matchedStream?.totalLikes || 0,
           startedAt: matchedStream?.startedAt || recording.modifiedAt,
           endedAt: matchedStream?.endedAt || recording.modifiedAt,
+          creatorId: matchedStream?.creatorId || null,
+          categoryId: matchedStream?.categoryId || null,
         };
-
-        // Only include creatorId and categoryId if they exist
-        if (matchedStream?.creatorId) {
-          enrichedObject.creatorId = matchedStream.creatorId;
-        }
-        if (matchedStream?.categoryId) {
-          enrichedObject.categoryId = matchedStream.categoryId;
-        }
-
-        return enrichedObject;
       })
       .filter((item) => item !== null);
 
@@ -994,12 +987,40 @@ const deleteStream = async (streamId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
   }
 
-  // Delete associated data
+  // Mark as deleted instead of hard delete (soft delete)
+  stream.isDeleted = true;
+  await stream.save();
+
+  // Delete associated chat messages and analytics
   await Promise.all([
     StreamChat.deleteMany({ streamId }),
     StreamAnalytics.deleteOne({ streamId }),
-    Stream.findByIdAndDelete(streamId),
   ]);
+
+  // Also delete from S3 if recording exists
+  if (stream.recordingUrl) {
+    try {
+      const { DeleteObjectCommand } = await import("@aws-sdk/client-s3");
+      const bucket = config.aws.bucket || "fernando-buckets";
+      
+      // Remove leading slash and construct the S3 key
+      let s3Key = stream.recordingUrl.startsWith("/")
+        ? stream.recordingUrl.substring(1)
+        : stream.recordingUrl;
+
+      // Delete the master.m3u8 file
+      const deleteCommand = new DeleteObjectCommand({
+        Bucket: bucket,
+        Key: `${s3Key}/media/hls/master.m3u8`,
+      });
+      await s3Client.send(deleteCommand);
+
+      console.log(`[deleteStream] Deleted S3 recording: ${s3Key}`);
+    } catch (error) {
+      console.error(`[deleteStream] Error deleting S3 recording:`, error);
+      // Don't throw error, just log it
+    }
+  }
 
   // Update creator stats
   await User.findByIdAndUpdate(stream.creatorId, {

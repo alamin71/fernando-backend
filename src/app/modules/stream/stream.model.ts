@@ -52,6 +52,9 @@ const streamSchema = new Schema<IStream, StreamModel>(
 
     // Report tracking
     isReported: { type: Boolean, default: false, index: true },
+    
+    // Deletion tracking
+    isDeleted: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );
