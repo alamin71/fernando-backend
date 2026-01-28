@@ -4,6 +4,7 @@ import { User } from "../user/user.model";
 import AppError from "../../../errors/AppError";
 import httpStatus from "http-status";
 import crypto from "crypto";
+import mongoose from "mongoose";
 import { StreamChat } from "./streamChat.model";
 import {
   IvsClient,
@@ -667,94 +668,188 @@ const getRecordedStreams = async (filters: {
 }) => {
   const { page, limit, creatorId, categoryId, search } = filters;
 
-  // First, get all OFFLINE streams (with or without recordingUrl in DB)
-  const filterObj: any = {
-    status: "OFFLINE",
-  };
+  try {
+    // Strategy: Get all recordings from S3, then match with database streams
+    const bucket = config.aws.bucket || "fernando-buckets";
+    const channelId = getChannelIdFromArn();
+    const accountId = getAccountIdFromArn();
+    const basePrefix = `ivs/v1/${accountId}/${channelId}/`;
 
-  if (creatorId) {
-    filterObj.creatorId = creatorId;
-  }
+    console.log(`Fetching all IVS recordings from S3 prefix: ${basePrefix}`);
 
-  if (categoryId) {
-    filterObj.categoryId = categoryId;
-  }
+    // List all master.m3u8 files in the IVS folder
+    const s3Recordings: Array<{ path: string; modifiedAt: Date }> = [];
+    let continuationToken: string | undefined;
 
-  if (search) {
-    filterObj.$or = [
-      { title: { $regex: search, $options: "i" } },
-      { description: { $regex: search, $options: "i" } },
-    ];
-  }
+    // Paginate through S3 to get all recordings
+    do {
+      const command = new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: basePrefix,
+        ContinuationToken: continuationToken,
+        MaxKeys: 1000,
+      });
 
-  const streams = await Stream.find(filterObj)
-    .populate("creatorId", "username channelName image creatorStats")
-    .populate("categoryId", "name")
-    .select("-streamKey")
-    .sort({ endedAt: -1 }) // Latest ended streams first
-    .lean();
+      const response = await s3Client.send(command);
 
-  // Enrich streams with recording paths by searching S3
-  const streamsWithPlayback = await Promise.all(
-    streams.map(async (stream: any) => {
-      let finalRecordingUrl = stream.recordingUrl || "";
+      // Find all master.m3u8 files
+      response.Contents?.forEach((obj) => {
+        if (obj.Key?.endsWith("/media/hls/master.m3u8")) {
+          const sessionPath = obj.Key.replace("/media/hls/master.m3u8", "");
+          s3Recordings.push({
+            path: `/${sessionPath}`,
+            modifiedAt: obj.LastModified || new Date(),
+          });
+        }
+      });
 
-      // If stream doesn't have recording URL yet, try to find in S3
-      if (!finalRecordingUrl && stream.startedAt) {
-        const channelId = getChannelIdFromArn();
-        const accountId = getAccountIdFromArn();
-        const startDate = new Date(stream.startedAt);
+      continuationToken = response.NextContinuationToken;
+    } while (continuationToken);
 
-        try {
-          const actualPath = await findRecordingPath(
-            accountId,
-            channelId,
-            startDate,
-          );
-          if (actualPath) {
-            finalRecordingUrl = actualPath;
-            // Update stream in DB for future use
-            await Stream.findByIdAndUpdate(stream._id, {
-              recordingUrl: actualPath,
+    console.log(`Found ${s3Recordings.length} recordings in S3`);
+
+    // Sort by modified date descending (newest first)
+    s3Recordings.sort(
+      (a, b) => b.modifiedAt.getTime() - a.modifiedAt.getTime(),
+    );
+
+    // Now match S3 recordings with database streams
+    const streamDataMap = new Map<string, any>();
+
+    // Get all OFFLINE streams and map them by date
+    const allOfflineStreams = await Stream.find({
+      status: "OFFLINE",
+    })
+      .populate("creatorId", "username channelName image creatorStats")
+      .populate("categoryId", "name")
+      .select("-streamKey")
+      .lean();
+
+    // Create a map of streams by their start date (year/month/day/hour/minute)
+    allOfflineStreams.forEach((stream: any) => {
+      if (stream.startedAt) {
+        const date = new Date(stream.startedAt);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1);
+        const day = String(date.getDate());
+        const hour = String(date.getHours()).padStart(2, "0");
+        const minute = String(date.getMinutes()).padStart(2, "0");
+
+        // Create a key for matching (we'll try to match the date/time)
+        const dateKey = `${year}/${month}/${day}/${hour}/${minute}`;
+
+        if (!streamDataMap.has(dateKey)) {
+          streamDataMap.set(dateKey, []);
+        }
+        streamDataMap.get(dateKey)!.push(stream);
+      }
+    });
+
+    // Build final results by enriching S3 recordings with database data
+    const enrichedRecordings = s3Recordings
+      .map((recording) => {
+        // Try to extract date from recording path
+        // Path format: /ivs/v1/{accountId}/{channelId}/{year}/{month}/{day}/{hour}/{minute}/{sessionId}
+        const pathParts = recording.path.split("/");
+        const year = pathParts[5];
+        const month = pathParts[6];
+        const day = pathParts[7];
+        const hour = pathParts[8];
+        const minute = pathParts[9];
+
+        // Try to find matching stream in database
+        const dateKey = `${year}/${month}/${day}/${hour}/${minute}`;
+        let matchedStream = streamDataMap.get(dateKey)?.[0];
+
+        // If no exact match, try broader search by date
+        if (!matchedStream && year && month && day) {
+          const dateKeyBroad = `${year}/${month}/${day}`;
+          const streamsOnDate = allOfflineStreams.filter((s: any) => {
+            const sDate = new Date(s.startedAt);
+            return (
+              sDate.getFullYear() === parseInt(year) &&
+              sDate.getMonth() + 1 === parseInt(month) &&
+              sDate.getDate() === parseInt(day)
+            );
+          });
+
+          if (streamsOnDate.length > 0) {
+            // Pick the one closest to the recorded time
+            matchedStream = streamsOnDate.reduce((prev: any, curr: any) => {
+              const currTime = new Date(curr.startedAt).getTime();
+              const prevTime = new Date(prev.startedAt).getTime();
+              const recordingTime = recording.modifiedAt.getTime();
+
+              const currDiff = Math.abs(currTime - recordingTime);
+              const prevDiff = Math.abs(prevTime - recordingTime);
+
+              return currDiff < prevDiff ? curr : prev;
             });
           }
-        } catch (error) {
-          console.log("Could not find recording path:", error);
         }
-      }
 
-      // Only return streams that have recordings
-      if (!finalRecordingUrl) {
-        return null;
-      }
+        // Apply filters
+        if (
+          creatorId &&
+          matchedStream?.creatorId?.toString() !== creatorId.toString()
+        ) {
+          return null;
+        }
 
-      return {
-        ...stream,
-        recordingUrl: finalRecordingUrl,
-        playbackUrl: finalRecordingUrl
-          ? generatePlaybackUrl(finalRecordingUrl)
-          : "",
-      };
-    }),
-  );
+        if (
+          categoryId &&
+          matchedStream?.categoryId?.toString() !== categoryId.toString()
+        ) {
+          return null;
+        }
 
-  // Filter out streams without recordings
-  const recordedStreamsOnly = streamsWithPlayback.filter(
-    (s) => s !== null && s.recordingUrl,
-  );
+        if (search && matchedStream) {
+          const searchLower = search.toLowerCase();
+          const matchesSearch =
+            (matchedStream.title &&
+              matchedStream.title.toLowerCase().includes(searchLower)) ||
+            (matchedStream.description &&
+              matchedStream.description.toLowerCase().includes(searchLower));
+          if (!matchesSearch) {
+            return null;
+          }
+        }
 
-  // Apply pagination after filtering
-  const paginatedStreams = recordedStreamsOnly.slice(
-    (page - 1) * limit,
-    page * limit,
-  );
+        // Build the enriched object
+        return {
+          _id: matchedStream?._id || new mongoose.Types.ObjectId(),
+          title: matchedStream?.title || "Live Stream",
+          description: matchedStream?.description || "",
+          thumbnail: matchedStream?.thumbnail || "",
+          recordingUrl: recording.path,
+          playbackUrl: generatePlaybackUrl(recording.path),
+          durationSeconds: matchedStream?.durationSeconds || 0,
+          totalViews: matchedStream?.totalViews || 0,
+          totalLikes: matchedStream?.totalLikes || 0,
+          startedAt: matchedStream?.startedAt || recording.modifiedAt,
+          endedAt: matchedStream?.endedAt || recording.modifiedAt,
+          creatorId: matchedStream?.creatorId || null,
+          categoryId: matchedStream?.categoryId || null,
+        };
+      })
+      .filter((item) => item !== null);
 
-  return {
-    streams: paginatedStreams,
-    total: recordedStreamsOnly.length,
-    page,
-    limit,
-  };
+    // Apply pagination
+    const paginatedRecordings = enrichedRecordings.slice(
+      (page - 1) * limit,
+      page * limit,
+    );
+
+    return {
+      streams: paginatedRecordings,
+      total: enrichedRecordings.length,
+      page,
+      limit,
+    };
+  } catch (error) {
+    console.error("Error getting recorded streams:", error);
+    throw error;
+  }
 };
 
 // Get recording URL for a specific stream
