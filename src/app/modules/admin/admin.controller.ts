@@ -384,7 +384,7 @@ const listStreams = catchAsync(async (req: Request, res: Response) => {
   const categoryId = req.query.categoryId as string | undefined;
   const search = req.query.search as string | undefined;
 
-  const filter: any = {};
+  const filter: any = { isDeleted: false };
   if (status) filter.status = status;
   if (categoryId) filter.categoryId = categoryId;
   if (search) {
