@@ -17,6 +17,23 @@ const generateStreamKey = (): string => {
   return crypto.randomBytes(16).toString("hex");
 };
 
+// Helper: Extract accountId from IVS Channel ARN
+const getAccountIdFromArn = (): string => {
+  const arn =
+    config.ivs.channelArn ||
+    "arn:aws:ivs:us-east-1:504956988903:channel/2DmwQzILLrtf";
+  const parts = arn.split(":");
+  return parts[4] || "504956988903";
+};
+
+// Helper: Extract channelId from IVS Channel ARN
+const getChannelIdFromArn = (): string => {
+  const arn =
+    config.ivs.channelArn ||
+    "arn:aws:ivs:us-east-1:504956988903:channel/2DmwQzILLrtf";
+  return arn.split("/").pop() || "2DmwQzILLrtf";
+};
+
 // Initialize IVS Client
 const ivsClient = new IvsClient({
   region: config.aws.region || "us-east-1",
@@ -207,8 +224,8 @@ const getStreamById = async (streamId: string) => {
 
   // If stream is offline and has no recording URL yet, try to find it in S3
   if (stream.status === "OFFLINE" && !stream.recordingUrl && stream.startedAt) {
-    const channelId = config.ivs.channelArn?.split("/").pop() || "2DmwQzILLrtf";
-    const accountId = "504956988903";
+    const channelId = getChannelIdFromArn();
+    const accountId = getAccountIdFromArn();
     const recordingPath = await findRecordingPath(
       accountId,
       channelId,
@@ -650,9 +667,9 @@ const getRecordedStreams = async (filters: {
 }) => {
   const { page, limit, creatorId, categoryId, search } = filters;
 
+  // First, get all OFFLINE streams (with or without recordingUrl in DB)
   const filterObj: any = {
     status: "OFFLINE",
-    recordingUrl: { $exists: true, $ne: "" }, // Only streams with recordings
   };
 
   if (creatorId) {
@@ -674,23 +691,18 @@ const getRecordedStreams = async (filters: {
     .populate("creatorId", "username channelName image creatorStats")
     .populate("categoryId", "name")
     .select("-streamKey")
-    .skip((page - 1) * limit)
-    .limit(limit)
     .sort({ endedAt: -1 }) // Latest ended streams first
     .lean();
 
-  // Add playbackUrl to each stream with fresh S3 search for session ID
+  // Enrich streams with recording paths by searching S3
   const streamsWithPlayback = await Promise.all(
     streams.map(async (stream: any) => {
-      let finalRecordingUrl = stream.recordingUrl;
+      let finalRecordingUrl = stream.recordingUrl || "";
 
-      // Try to find actual recording path from S3 (with session ID)
-      if (stream.startedAt) {
-        const channelArn =
-          config.ivs.channelArn ||
-          "arn:aws:ivs:us-east-1:504956988903:channel/2DmwQzILLrtf";
-        const channelId = channelArn.split("/").pop() || "2DmwQzILLrtf";
-        const accountId = channelArn.split(":")[4] || "504956988903";
+      // If stream doesn't have recording URL yet, try to find in S3
+      if (!finalRecordingUrl && stream.startedAt) {
+        const channelId = getChannelIdFromArn();
+        const accountId = getAccountIdFromArn();
         const startDate = new Date(stream.startedAt);
 
         try {
@@ -701,28 +713,45 @@ const getRecordedStreams = async (filters: {
           );
           if (actualPath) {
             finalRecordingUrl = actualPath;
+            // Update stream in DB for future use
+            await Stream.findByIdAndUpdate(stream._id, {
+              recordingUrl: actualPath,
+            });
           }
         } catch (error) {
-          console.log("Could not find updated recording path:", error);
-          // Use fallback
+          console.log("Could not find recording path:", error);
         }
+      }
+
+      // Only return streams that have recordings
+      if (!finalRecordingUrl) {
+        return null;
       }
 
       return {
         ...stream,
         recordingUrl: finalRecordingUrl,
         playbackUrl: finalRecordingUrl
-          ? `${generatePlaybackUrl(finalRecordingUrl)}/media/hls/master.m3u8`
+          ? generatePlaybackUrl(finalRecordingUrl)
           : "",
       };
     }),
   );
 
-  const total = await Stream.countDocuments(filterObj);
+  // Filter out streams without recordings
+  const recordedStreamsOnly = streamsWithPlayback.filter(
+    (s) => s !== null && s.recordingUrl,
+  );
+
+  // Apply pagination after filtering
+  const paginatedStreams = recordedStreamsOnly.slice(
+    (page - 1) * limit,
+    page * limit,
+  );
 
   return {
-    streams: streamsWithPlayback,
-    total,
+    streams: paginatedStreams,
+    total: recordedStreamsOnly.length,
     page,
     limit,
   };
