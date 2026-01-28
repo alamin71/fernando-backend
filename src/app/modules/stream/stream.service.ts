@@ -678,9 +678,11 @@ const getRecordedStreams = async (filters: {
 
       // Try to find actual recording path from S3 (with session ID)
       if (stream.startedAt) {
-        const accountId =
-          config.ivs.channelArn?.split("/").pop() || "2DmwQzILLrtf";
-        const channelId = "2DmwQzILLrtf";
+        const channelArn =
+          config.ivs.channelArn ||
+          "arn:aws:ivs:us-east-1:504956988903:channel/2DmwQzILLrtf";
+        const channelId = channelArn.split("/").pop() || "2DmwQzILLrtf";
+        const accountId = channelArn.split(":")[4] || "504956988903";
         const startDate = new Date(stream.startedAt);
 
         try {
