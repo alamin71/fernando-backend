@@ -215,7 +215,7 @@ const endLive = async (
 };
 
 // Get stream by ID
-const getStreamById = async (streamId: string) => {
+const getStreamById = async (streamId: string, userId?: string) => {
   const stream = await Stream.findById(streamId)
     .populate("creatorId", "username channelName image creatorStats")
     .populate("categoryId", "name");
@@ -243,9 +243,21 @@ const getStreamById = async (streamId: string) => {
 
   const analytics = await StreamAnalytics.findOne({ streamId });
 
+  // Check if current user liked/disliked this stream
+  let isLikedByMe = false;
+  let isDislikedByMe = false;
+
+  if (userId) {
+    const user = await User.findById(userId);
+    isLikedByMe = user?.likedStreams?.includes(streamId) || false;
+    isDislikedByMe = user?.dislikedStreams?.includes(streamId) || false;
+  }
+
   return {
     stream,
     analytics,
+    isLikedByMe,
+    isDislikedByMe,
   };
 };
 
@@ -468,7 +480,7 @@ const toggleLike = async (streamId: string, userId: string) => {
       },
     );
 
-    return { unliked: true, totalLikes: newLikeCount };
+    return { unliked: true, isLikedByMe: false, totalLikes: newLikeCount };
   } else {
     // Like
     await User.findByIdAndUpdate(userId, {
@@ -486,7 +498,7 @@ const toggleLike = async (streamId: string, userId: string) => {
       { upsert: true },
     );
 
-    return { liked: true, totalLikes: newLikeCount };
+    return { liked: true, isLikedByMe: true, totalLikes: newLikeCount };
   }
 };
 
@@ -527,6 +539,7 @@ const toggleDislike = async (streamId: string, userId: string) => {
 
     return {
       undisliked: true,
+      isDislikedByMe: false,
       totalDislikes: newDislikeCount,
     };
   } else {
@@ -546,7 +559,11 @@ const toggleDislike = async (streamId: string, userId: string) => {
       { upsert: true },
     );
 
-    return { disliked: true, totalDislikes: newDislikeCount };
+    return {
+      disliked: true,
+      isDislikedByMe: true,
+      totalDislikes: newDislikeCount,
+    };
   }
 };
 

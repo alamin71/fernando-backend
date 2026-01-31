@@ -70,8 +70,9 @@ const endLive = catchAsync(async (req: Request, res: Response) => {
 // Get stream by ID
 const getStreamById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
+  const userId = req.user?.id; // Optional - if user is authenticated
 
-  const result = await streamService.getStreamById(id);
+  const result = await streamService.getStreamById(id, userId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
