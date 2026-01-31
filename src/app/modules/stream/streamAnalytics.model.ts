@@ -26,10 +26,11 @@ const streamAnalyticsSchema = new Schema<
     uniqueViewers: { type: Number, default: 0 },
     peakConcurrentViewers: { type: Number, default: 0 },
     likes: { type: Number, default: 0 },
+    dislikes: { type: Number, default: 0 },
     comments: { type: Number, default: 0 },
     shares: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Indexes
@@ -39,12 +40,12 @@ streamAnalyticsSchema.index({ userId: 1, createdAt: -1 });
 streamAnalyticsSchema.index({ createdAt: 1 }, { expireAfterSeconds: 7776000 });
 
 streamAnalyticsSchema.statics.getStreamStats = async function (
-  streamId: string
+  streamId: string,
 ) {
   return await this.findOne({ streamId }).lean();
 };
 
 export const StreamAnalytics = model<IStreamAnalytics, StreamAnalyticsModel>(
   "StreamAnalytics",
-  streamAnalyticsSchema
+  streamAnalyticsSchema,
 );

@@ -44,6 +44,7 @@ const streamSchema = new Schema<IStream, StreamModel>(
     peakViewers: { type: Number, default: 0 },
     totalViews: { type: Number, default: 0, index: true },
     totalLikes: { type: Number, default: 0 },
+    totalDislikes: { type: Number, default: 0 },
     totalComments: { type: Number, default: 0 },
 
     // WebRTC

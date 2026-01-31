@@ -9,6 +9,7 @@ export interface IStreamAnalytics {
   uniqueViewers: number;
   peakConcurrentViewers: number;
   likes: number;
+  dislikes: number;
   comments: number;
   shares: number;
   createdAt?: Date;

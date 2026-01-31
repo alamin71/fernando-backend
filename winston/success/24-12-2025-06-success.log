@@ -1,6 +1,0 @@
-Wed Dec 24 2025 6:34:47 [SERVER-NAME] info: [36m🎨 --------------> Database seeding start <--------------- 🎨[39m
-Wed Dec 24 2025 6:34:48 [SERVER-NAME] error: [31m💥 Error seeding admin: 💥[39m Admin validation failed: password: Path `password` is required.
-Wed Dec 24 2025 6:34:48 [SERVER-NAME] error: [31m🔥 Error creating Super Admin: 🔥[39m Admin validation failed: password: Path `password` is required.
-Wed Dec 24 2025 6:44:34 [SERVER-NAME] info: [36m🎨 --------------> Database seeding start <--------------- 🎨[39m
-Wed Dec 24 2025 6:44:35 [SERVER-NAME] info: [32m✨ --------------> Admin seeded successfully <-------------- ✨[39m
-Wed Dec 24 2025 6:44:35 [SERVER-NAME] info: [32m🎉 --------------> Database seeding completed <--------------- 🎉[39m

@@ -24,6 +24,7 @@ export interface IStream {
   peakViewers: number;
   totalViews: number;
   totalLikes: number;
+  totalDislikes: number;
   totalComments: number;
 
   // WebRTC specific

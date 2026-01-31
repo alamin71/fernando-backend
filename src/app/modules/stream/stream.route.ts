@@ -163,9 +163,17 @@ router.delete("/:id/leave", streamControllers.decrementViewCount);
  * ❤️ LIKE/UNLIKE STREAM
  * POST /api/v1/streams/:id/like
  * Purpose: Stream like/unlike toggle করা
- * Auth: Creator only
+ * Auth: Required (any authenticated user)
  */
-router.post("/:id/like", auth("creator"), streamControllers.toggleLike);
+router.post("/:id/like", auth(), streamControllers.toggleLike);
+
+/**
+ * 👎 DISLIKE/REMOVE DISLIKE STREAM
+ * POST /api/v1/streams/:id/dislike
+ * Purpose: Stream dislike/remove dislike toggle করা
+ * Auth: Required (any authenticated user)
+ */
+router.post("/:id/dislike", auth(), streamControllers.toggleDislike);
 
 // ==================== ANALYTICS & RECORDINGS ====================
 

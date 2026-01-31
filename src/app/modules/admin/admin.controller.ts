@@ -36,7 +36,7 @@ const adminLogin = catchAsync(async (req: Request, res: Response) => {
   const accessToken = jwt.sign(
     payload,
     config.jwt.jwt_secret as string,
-    { expiresIn: "2h" } as SignOptions
+    { expiresIn: "2h" } as SignOptions,
   );
 
   // Refresh token using configured secret/expiry
@@ -97,7 +97,7 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   await adminService.changePassword(
     req.user.id,
     req.body.oldPassword,
-    req.body.newPassword
+    req.body.newPassword,
   );
   sendResponse(res, {
     statusCode: 200,
@@ -157,7 +157,7 @@ const verifyOtp = catchAsync(async (req: Request, res: Response) => {
     config.jwt.jwt_secret as string,
     {
       expiresIn: "15m",
-    } as SignOptions
+    } as SignOptions,
   );
 
   sendResponse(res, {
@@ -398,7 +398,7 @@ const listStreams = catchAsync(async (req: Request, res: Response) => {
     .populate("creatorId", "username image channelName")
     .populate("categoryId", "name")
     .select(
-      "_id title status creatorId categoryId startedAt endedAt totalViews totalLikes totalComments thumbnail isPublic"
+      "_id title status creatorId categoryId startedAt endedAt totalViews totalLikes totalComments thumbnail isPublic",
     )
     .skip((page - 1) * limit)
     .limit(limit)
@@ -442,9 +442,9 @@ const getStreamAnalytics = catchAsync(async (req: Request, res: Response) => {
 const getAllCreators = catchAsync(async (req: Request, res: Response) => {
   const queryBuilder = new QueryBuilder<any>(
     User.find({ role: "creator" }).select(
-      "username channelName email image createdAt creatorStats isBlocked status"
+      "username channelName email image createdAt creatorStats isBlocked status",
     ),
-    req.query
+    req.query,
   )
     .search(["username", "channelName", "email"])
     .filter()
@@ -511,7 +511,7 @@ const blockCreator = catchAsync(async (req: Request, res: Response) => {
   const creator = await User.findOneAndUpdate(
     { _id: id, role: "creator" },
     { isBlocked: true },
-    { new: true }
+    { new: true },
   ).select("_id username channelName email isBlocked status");
 
   if (!creator) {
@@ -537,7 +537,7 @@ const unblockCreator = catchAsync(async (req: Request, res: Response) => {
   const creator = await User.findOneAndUpdate(
     { _id: id, role: "creator" },
     { isBlocked: false },
-    { new: true }
+    { new: true },
   ).select("_id username channelName email isBlocked status");
 
   if (!creator) {
@@ -579,7 +579,7 @@ const getCreatorById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
   const creator = await User.findOne({ _id: id, role: "creator" }).select(
-    "username channelName email image createdAt updatedAt creatorStats profileData status verified"
+    "username channelName email image createdAt updatedAt creatorStats profileData status verified",
   );
 
   if (!creator) {
@@ -616,13 +616,13 @@ const bulkDeleteCreators = catchAsync(async (req: Request, res: Response) => {
   if (!ids || !Array.isArray(ids) || ids.length === 0) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      "Please provide an array of creator IDs"
+      "Please provide an array of creator IDs",
     );
   }
 
   const result = await User.updateMany(
     { _id: { $in: ids }, role: "creator" },
-    { isDeleted: true }
+    { isDeleted: true },
   );
 
   if (result.modifiedCount === 0) {
@@ -640,9 +640,8 @@ const bulkDeleteCreators = catchAsync(async (req: Request, res: Response) => {
 const deleteStream = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const { deleteStream: deleteStreamService } = await import(
-    "../stream/stream.service"
-  );
+  const { deleteStream: deleteStreamService } =
+    await import("../stream/stream.service");
   const result = await deleteStreamService(id);
 
   sendResponse(res, {

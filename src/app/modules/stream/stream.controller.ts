@@ -222,6 +222,21 @@ const toggleLike = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Toggle dislike on stream
+const toggleDislike = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  const result = await streamService.toggleDislike(id, userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: result.disliked ? "Stream disliked" : "Stream dislike removed",
+    data: result,
+  });
+});
+
 // Get user's liked streams
 const getLikedStreams = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
@@ -471,6 +486,26 @@ const deleteChatMessage = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
+export const streamControllers = {
+  startLive,
+  endLive,
+  getStreamById,
+  getLiveStreams,
+  getCreatorStreams,
+  updateStream,
+  incrementViewCount,
+  decrementViewCount,
+  toggleLike,
+  toggleDislike,
+  getLikedStreams,
+  getStreamAnalytics,
+  getRecordedStreams,
+  getStreamRecording,
+  getPlaybackUrl,
+  uploadRecording,
+  getIngestConfig,
+};
 
 export const streamChatControllers = {
   postChatMessage,

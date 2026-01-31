@@ -146,6 +146,7 @@ export type IUser = {
   followers?: string[];
   following?: string[];
   likedStreams?: string[]; // Stream IDs that user has liked
+  dislikedStreams?: string[]; // Stream IDs that user has disliked
 
   authentication?: {
     isResetPassword?: boolean;

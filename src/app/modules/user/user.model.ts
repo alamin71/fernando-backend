@@ -95,6 +95,7 @@ const userSchema = new Schema<IUser, UserModel>(
     followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
     following: [{ type: Schema.Types.ObjectId, ref: "User" }],
     likedStreams: [{ type: Schema.Types.ObjectId, ref: "Stream" }], // Streams user has liked
+    dislikedStreams: [{ type: Schema.Types.ObjectId, ref: "Stream" }], // Streams user has disliked
 
     authentication: {
       isResetPassword: { type: Boolean, default: false },
@@ -102,7 +103,7 @@ const userSchema = new Schema<IUser, UserModel>(
       expireAt: { type: Date, default: null },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // ---------- Statics ----------
@@ -130,7 +131,7 @@ userSchema.statics.isExistUserByChannelName = async (channelName: string) => {
 
 userSchema.statics.isMatchPassword = async (
   password: string,
-  hashPassword: string
+  hashPassword: string,
 ): Promise<boolean> => {
   return await bcrypt.compare(password, hashPassword);
 };
@@ -167,7 +168,7 @@ userSchema.pre("save", async function (this: any, next) {
       if (isExist) {
         throw new AppError(
           StatusCodes.BAD_REQUEST,
-          "Channel name already exists!"
+          "Channel name already exists!",
         );
       }
     }
@@ -175,7 +176,7 @@ userSchema.pre("save", async function (this: any, next) {
     if (this.isModified("password")) {
       this.password = await bcrypt.hash(
         this.password,
-        Number(config.bcrypt_salt_rounds)
+        Number(config.bcrypt_salt_rounds),
       );
     }
 

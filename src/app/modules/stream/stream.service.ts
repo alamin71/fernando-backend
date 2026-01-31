@@ -111,6 +111,7 @@ const startLive = async (
     peakViewers: 0,
     totalViews: 0,
     totalLikes: 0,
+    totalDislikes: 0,
     totalComments: 0,
     playbackUrl: playbackUrl, // Save playback URL to database
   });
@@ -477,6 +478,54 @@ const toggleLike = async (streamId: string, userId: string) => {
   }
 };
 
+// Toggle dislike on stream
+const toggleDislike = async (streamId: string, userId: string) => {
+  const stream = await Stream.findById(streamId);
+
+  if (!stream) {
+    throw new AppError(httpStatus.NOT_FOUND, "Stream not found");
+  }
+
+  // Check if user already disliked this stream
+  const user = await User.findById(userId);
+  const hasDisliked = user?.dislikedStreams?.includes(streamId);
+
+  if (hasDisliked) {
+    // Remove dislike
+    await User.findByIdAndUpdate(userId, {
+      $pull: { dislikedStreams: streamId },
+    });
+    await Stream.findByIdAndUpdate(streamId, {
+      $inc: { totalDislikes: -1 },
+      $max: { totalDislikes: 0 },
+    });
+    await StreamAnalytics.findOneAndUpdate(
+      { streamId },
+      { $inc: { dislikes: -1 }, $max: { dislikes: 0 } },
+    );
+
+    return {
+      disliked: false,
+      totalDislikes: Math.max(0, stream.totalDislikes - 1),
+    };
+  } else {
+    // Dislike
+    await User.findByIdAndUpdate(userId, {
+      $addToSet: { dislikedStreams: streamId },
+    });
+    await Stream.findByIdAndUpdate(streamId, {
+      $inc: { totalDislikes: 1 },
+    });
+    await StreamAnalytics.findOneAndUpdate(
+      { streamId },
+      { $inc: { dislikes: 1 } },
+      { upsert: true },
+    );
+
+    return { disliked: true, totalDislikes: (stream.totalDislikes || 0) + 1 };
+  }
+};
+
 // Get user's liked streams
 const getLikedStreams = async (
   userId: string,
@@ -542,6 +591,7 @@ const getStreamAnalytics = async (streamId: string, creatorId: string) => {
     peakViewers: stream.peakViewers,
     totalViews: stream.totalViews,
     totalLikes: stream.totalLikes,
+    totalDislikes: stream.totalDislikes,
     totalComments: stream.totalComments,
     analytics: analytics || {},
   };
@@ -934,22 +984,6 @@ const getStreamRecording = async (streamId: string) => {
   };
 };
 
-export const streamService = {
-  startLive,
-  endLive,
-  getStreamById,
-  getLiveStreams,
-  getCreatorStreams,
-  updateStream,
-  incrementViewCount,
-  decrementViewCount,
-  toggleLike,
-  getLikedStreams,
-  getStreamAnalytics,
-  getRecordedStreams,
-  getStreamRecording,
-};
-
 // ================= CHAT SERVICES =================
 export const streamChatService = {
   async sendMessage(streamId: string, userId: string, message: string) {
@@ -1058,6 +1092,23 @@ const deleteStream = async (streamId: string) => {
   });
 
   return { message: "Stream deleted successfully" };
+};
+
+export const streamService = {
+  startLive,
+  endLive,
+  getStreamById,
+  getLiveStreams,
+  getCreatorStreams,
+  updateStream,
+  incrementViewCount,
+  decrementViewCount,
+  toggleLike,
+  toggleDislike,
+  getLikedStreams,
+  getStreamAnalytics,
+  getRecordedStreams,
+  getStreamRecording,
 };
 
 export { deleteStream };
