@@ -414,25 +414,6 @@ const getIngestConfig = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const streamControllers = {
-  startLive,
-  endLive,
-  getStreamById,
-  getLiveStreams,
-  getCreatorStreams,
-  updateStream,
-  incrementViewCount,
-  decrementViewCount,
-  toggleLike,
-  getLikedStreams,
-  getStreamAnalytics,
-  getRecordedStreams,
-  getStreamRecording,
-  getPlaybackUrl,
-  uploadRecording,
-  getIngestConfig,
-};
-
 // ============== CHAT CONTROLLERS ==============
 const postChatMessage = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params; // streamId
