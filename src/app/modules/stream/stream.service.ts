@@ -450,31 +450,43 @@ const toggleLike = async (streamId: string, userId: string) => {
     await User.findByIdAndUpdate(userId, {
       $pull: { likedStreams: streamId },
     });
+
+    const newLikeCount = Math.max(0, stream.totalLikes - 1);
     await Stream.findByIdAndUpdate(streamId, {
-      $inc: { totalLikes: -1 },
-      $max: { totalLikes: 0 },
+      $set: { totalLikes: newLikeCount },
     });
+
     await StreamAnalytics.findOneAndUpdate(
       { streamId },
-      { $inc: { likes: -1 }, $max: { likes: 0 } },
+      {
+        $set: {
+          likes: Math.max(
+            0,
+            (await StreamAnalytics.findOne({ streamId }))?.likes || 0 - 1,
+          ),
+        },
+      },
     );
 
-    return { liked: false, totalLikes: Math.max(0, stream.totalLikes - 1) };
+    return { unliked: true, totalLikes: newLikeCount };
   } else {
     // Like
     await User.findByIdAndUpdate(userId, {
       $addToSet: { likedStreams: streamId },
     });
+
+    const newLikeCount = stream.totalLikes + 1;
     await Stream.findByIdAndUpdate(streamId, {
-      $inc: { totalLikes: 1 },
+      $set: { totalLikes: newLikeCount },
     });
+
     await StreamAnalytics.findOneAndUpdate(
       { streamId },
       { $inc: { likes: 1 } },
       { upsert: true },
     );
 
-    return { liked: true, totalLikes: stream.totalLikes + 1 };
+    return { liked: true, totalLikes: newLikeCount };
   }
 };
 
@@ -495,34 +507,46 @@ const toggleDislike = async (streamId: string, userId: string) => {
     await User.findByIdAndUpdate(userId, {
       $pull: { dislikedStreams: streamId },
     });
+
+    const newDislikeCount = Math.max(0, (stream.totalDislikes || 0) - 1);
     await Stream.findByIdAndUpdate(streamId, {
-      $inc: { totalDislikes: -1 },
-      $max: { totalDislikes: 0 },
+      $set: { totalDislikes: newDislikeCount },
     });
+
     await StreamAnalytics.findOneAndUpdate(
       { streamId },
-      { $inc: { dislikes: -1 }, $max: { dislikes: 0 } },
+      {
+        $set: {
+          dislikes: Math.max(
+            0,
+            (await StreamAnalytics.findOne({ streamId }))?.dislikes || 0 - 1,
+          ),
+        },
+      },
     );
 
     return {
-      disliked: false,
-      totalDislikes: Math.max(0, stream.totalDislikes - 1),
+      undisliked: true,
+      totalDislikes: newDislikeCount,
     };
   } else {
     // Dislike
     await User.findByIdAndUpdate(userId, {
       $addToSet: { dislikedStreams: streamId },
     });
+
+    const newDislikeCount = (stream.totalDislikes || 0) + 1;
     await Stream.findByIdAndUpdate(streamId, {
-      $inc: { totalDislikes: 1 },
+      $set: { totalDislikes: newDislikeCount },
     });
+
     await StreamAnalytics.findOneAndUpdate(
       { streamId },
       { $inc: { dislikes: 1 } },
       { upsert: true },
     );
 
-    return { disliked: true, totalDislikes: (stream.totalDislikes || 0) + 1 };
+    return { disliked: true, totalDislikes: newDislikeCount };
   }
 };
 
