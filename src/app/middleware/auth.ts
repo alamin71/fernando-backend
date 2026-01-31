@@ -49,6 +49,10 @@ const auth =
         console.error("User rejected:", decoded.id);
         throw new AppError(StatusCodes.FORBIDDEN, "User account rejected!!");
       }
+      if (user.isBlocked) {
+        console.error("User blocked:", decoded.id);
+        throw new AppError(StatusCodes.FORBIDDEN, "User account blocked!!");
+      }
       if (user.isDeleted) {
         console.error("User deleted:", decoded.id);
         throw new AppError(StatusCodes.FORBIDDEN, "User deleted!!");
